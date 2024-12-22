@@ -1,84 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:bfrm_app_flutter/screens/user_type.dart';
+import 'package:bfrm_app_flutter/screens/login.dart';
+
+
 
 class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              // Logo
-              Container(
-                margin: EdgeInsets.only(bottom: 20),
-                child: Image.asset(
-                  'assets/BFRM Logo.png', // Replace with your logo asset
-                  height: 100,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Spacer(),
+          // Logo
+          Image.asset(
+            'lib/assets/logo.png',
+            height: 200,
+            width: 200,
+          ),
+          SizedBox(height: 16),
+          // Title
+          Spacer(),
+          // Get Started Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserTypePage()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
+                padding: EdgeInsets.symmetric(vertical: 16),
               ),
-              // BFRM Text
-              Text(
-                'BFRM',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-              SizedBox(height: 40),
-              // Get Started Button
-              ElevatedButton(
-                onPressed: () {
-                  // Handle Get Started button press
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
+              child: Center(
                 child: Text(
                   'Get Started',
                   style: TextStyle(
-                    fontSize: 20,
                     color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              SizedBox(height: 20),
-              // Login Text
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    'Already have an account ? ',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                    ),
+            ),
+          ),
+          SizedBox(height: 16),
+          // Login Text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Already have an account? ',
+                style: TextStyle(color: Colors.black54, fontSize: 14),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: Text(
+                  'Login',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      // Handle Login tap
-                    },
-                    child: Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.blue,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
-        ),
+          SizedBox(height: 32),
+        ],
       ),
     );
   }
