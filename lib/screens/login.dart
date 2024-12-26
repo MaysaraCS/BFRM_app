@@ -5,7 +5,8 @@ import 'package:bfrm_app_flutter/screens/user_type.dart';
 import 'package:bfrm_app_flutter/screens/signup.dart';
 import 'package:bfrm_app_flutter/screens/OTP_Verify.dart';
 import 'package:bfrm_app_flutter/screens/CustomerHomePage.dart';
-
+import 'package:bfrm_app_flutter/screens/Password_Recovery.dart'; // Import the PasswordRecoveryPage
+import '../constant.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/login'),
+        Uri.parse(loginURL),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
@@ -36,13 +37,22 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       final responseData = jsonDecode(response.body);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        // Login success
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseData['message'])),
         );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Customerhomepage(),
+          ),
+        );
       } else {
+        // Login failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'])),
+          SnackBar(content: Text(responseData['message'] ?? "Login failed")),
         );
       }
     } catch (error) {
@@ -71,7 +81,14 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => SignUpPage()),
+                        MaterialPageRoute(
+                          builder: (context) => SignUpPage(
+                            user: User(
+                              email: "",
+                              role: "", // Provide default values
+                            ),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -160,6 +177,26 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 10),
 
+                        // Forgot Password Text
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PasswordRecoveryPage(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
 
                         ElevatedButton(
                           onPressed: () {
@@ -204,7 +241,14 @@ class _LoginPageState extends State<LoginPage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignUpPage()),
+                          MaterialPageRoute(
+                            builder: (context) => SignUpPage(
+                              user: User(
+                                email: "",
+                                role: "", // Provide default values
+                              ),
+                            ),
+                          ),
                         );
                       },
                       child: Text(

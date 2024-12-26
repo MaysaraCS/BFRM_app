@@ -2,6 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:bfrm_app_flutter/screens/signup.dart';
 import 'package:bfrm_app_flutter/screens/welcome_page.dart';
 
+class User {
+  String? role; // Add role property
+  String? email; // Add email property
+  String? password; // Add password property
+  String? passwordConfirmation; // Add password_confirmation property
+
+  User({
+    this.role,
+    this.email,
+    this.password,
+    this.passwordConfirmation,
+  });
+}
+
 
 class UserTypePage extends StatelessWidget {
   @override
@@ -24,7 +38,6 @@ class UserTypePage extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Logo at the top center
           const SizedBox(height: 20), // Space between app bar and logo
           Center(
             child: Column(
@@ -36,7 +49,6 @@ class UserTypePage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Remaining content
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -46,7 +58,6 @@ class UserTypePage extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Question Text
                 const Text(
                   'What type of user you are?',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -61,9 +72,12 @@ class UserTypePage extends StatelessWidget {
                     width: 250, // Set custom width
                     child: ElevatedButton.icon(
                       onPressed: () {
+                        User user = User(role: 'customer'); // Set role to customer
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignUpPage()),
+                          MaterialPageRoute(
+                            builder: (context) => SignUpPage(user: user),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.person, size: 24),
@@ -91,9 +105,12 @@ class UserTypePage extends StatelessWidget {
                     width: 250, // Set custom width
                     child: ElevatedButton.icon(
                       onPressed: () {
+                        User user = User(role: 'merchant'); // Set role to merchant
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignUpPage()),
+                          MaterialPageRoute(
+                            builder: (context) => SignUpPage(user: user),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.restaurant, size: 24),

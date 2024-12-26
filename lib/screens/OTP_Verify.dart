@@ -33,7 +33,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/verify-otp'),
+        Uri.parse('http://192.168.137.1:8000/api/verify-otp'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': 'test@example.com', 'otp': otp}),
       );

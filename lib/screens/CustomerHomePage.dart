@@ -10,6 +10,17 @@ class Customerhomepage extends StatefulWidget {
 class _CustomerhomepageState extends State<Customerhomepage> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Customer Home Page"),
+        backgroundColor: Colors.blue,
+      ),
+      body: const Center(
+        child: Text(
+          "Hello! Home page in progress",
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
   }
 }

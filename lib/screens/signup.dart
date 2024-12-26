@@ -1,54 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:bfrm_app_flutter/screens/user_type.dart';
-import 'package:bfrm_app_flutter/screens/login.dart';
 import 'package:bfrm_app_flutter/screens/OTP_Verify.dart';
+import '../constant.dart';
+import 'user_type.dart';
 
 class SignUpPage extends StatefulWidget {
+  final User user; // Receive the User object with role
+
+  const SignUpPage({Key? key, required this.user}) : super(key: key);
+
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  String _selectedRole = ""; // Role: either "merchant" or "customer"
   final _formKey = GlobalKey<FormState>();
 
   Future<void> registerUser() async {
     final String email = _emailController.text.trim();
-    final String password = _passwordController.text.trim();
-    final String confirmPassword = _confirmPasswordController.text.trim();
 
     if (!_formKey.currentState!.validate()) return;
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/register'),
+        Uri.parse(registerURL),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
-          "password": password,
-          "password_confirmation": confirmPassword,
-          "role": _selectedRole,
+          "role": widget.user.role, // Use role from User object
         }),
       );
 
       final responseData = jsonDecode(response.body);
+
       if (response.statusCode == 200) {
+        // Registration successful
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseData['message'])),
         );
+
+        // Navigate to OTP Verification Page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationPage(email: email), // Pass email for OTP
+          ),
+        );
+      } else if (response.statusCode == 401) {
+        // Validation error or email already exists
+        final errors = responseData['errors'];
+        if (errors != null && errors['email'] != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errors['email'][0])),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'] ?? somethingWentWrong)),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'])),
+          SnackBar(content: Text(responseData['message'] ?? somethingWentWrong)),
         );
       }
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An error occurred. Please try again later.")),
+        const SnackBar(content: Text(serverError)),
       );
     }
   }
@@ -70,10 +89,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => UserTypePage()),
-                      );
+                      Navigator.pop(context);
                     },
                   ),
                 ),
@@ -129,123 +145,45 @@ class _SignUpPageState extends State<SignUpPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 10),
-
-                        // Password Field
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration: InputDecoration(
-                            labelText: "Enter Your Password",
-                            border: OutlineInputBorder(),
-                          ),
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Password is required";
-                            }
-                            if (value.length < 8) {
-                              return "Password must be at least 8 characters";
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Confirm Password Field
-                        TextFormField(
-                          controller: _confirmPasswordController,
-                          decoration: InputDecoration(
-                            labelText: "Confirm Password",
-                            border: OutlineInputBorder(),
-                          ),
-                          obscureText: true,
-                          validator: (value) {
-                            if (value != _passwordController.text) {
-                              return "Passwords do not match";
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Role Selection (Dropdown)
-                        DropdownButtonFormField<String>(
-                          value: _selectedRole.isEmpty ? null : _selectedRole,
-                          items: [
-                            DropdownMenuItem(
-                              value: "merchant",
-                              child: Text("Merchant"),
-                            ),
-                            DropdownMenuItem(
-                              value: "customer",
-                              child: Text("Customer"),
-                            ),
-                          ],
-                          decoration: InputDecoration(
-                            labelText: "Select Role",
-                            border: OutlineInputBorder(),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedRole = value ?? "";
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Role is required";
-                            }
-                            return null;
-                          },
-                        ),
                         const SizedBox(height: 20),
 
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          registerUser().then((_) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OTPVerificationPage(email: _emailController.text.trim()),
-                              ),
-                            );
-                          });
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Next",
-                          style: TextStyle(color: Colors.white),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              registerUser();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              "Next",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ),
-                       ),
                       ],
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       'Already have an account? ',
                       style: TextStyle(color: Colors.black54, fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => LoginPage()),
-                        );
+                        Navigator.pop(context); // Navigate back
                       },
-                      child: Text(
+                      child: const Text(
                         'Login',
                         style: TextStyle(
                           color: Colors.blue,
@@ -256,7 +194,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
               ],
             ),
           ),

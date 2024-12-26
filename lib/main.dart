@@ -3,9 +3,7 @@ import 'package:bfrm_app_flutter/screens/welcome_page.dart';
 import 'package:bfrm_app_flutter/screens/OTP_Verify.dart';
 import 'package:bfrm_app_flutter/screens/SuccessPage.dart';
 import 'package:bfrm_app_flutter/screens/login.dart';
-
-
-
+import 'package:bfrm_app_flutter/screens/SetPasswordPage.dart';
 
 void main() {
   runApp(MyApp());
@@ -21,6 +19,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: WelcomePage(),
+      // Pass sample data for testing
+      // home: SetYourPasswordPage(
+      //   email: 'test@example.com', // Replace with a test email
+      //   role: 'customer',          // Replace with a test role
+      // ),
     );
   }
 }
