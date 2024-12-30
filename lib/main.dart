@@ -19,11 +19,6 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: WelcomePage(),
-      // Pass sample data for testing
-      // home: SetYourPasswordPage(
-      //   email: 'test@example.com', // Replace with a test email
-      //   role: 'customer',          // Replace with a test role
-      // ),
     );
   }
 }

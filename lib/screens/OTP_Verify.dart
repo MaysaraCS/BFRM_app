@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bfrm_app_flutter/screens/SuccessPage.dart';
-
+import '../constant.dart';
 
 class OTPVerificationPage extends StatefulWidget {
   final String email; // Email passed from the previous page
 
-  OTPVerificationPage({required this.email});
+  const OTPVerificationPage({Key? key, required this.email}) : super(key: key);
 
   @override
   _OTPVerificationPageState createState() => _OTPVerificationPageState();
@@ -22,7 +22,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
 
     if (otp.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter the OTP.')),
+        const SnackBar(content: Text('Please enter the OTP.')),
       );
       return;
     }
@@ -33,9 +33,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.137.1:8000/api/verify-otp'),
+        Uri.parse(OTPURL),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': 'test@example.com', 'otp': otp}),
+        body: jsonEncode({'email': widget.email, 'otp': otp}),
       );
 
       setState(() {
@@ -47,8 +47,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
 
         if (data['status'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('OTP verified successfully!')),
+            const SnackBar(content: Text('OTP verified successfully!')),
           );
+
           // Navigate to the SuccessPage
           Navigator.push(
             context,
@@ -61,7 +62,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error verifying OTP. Please try again.')),
+          const SnackBar(content: Text('Error verifying OTP. Please try again.')),
         );
       }
     } catch (e) {
@@ -70,11 +71,10 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred. Please try again.')),
+        const SnackBar(content: Text('An error occurred. Please try again.')),
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

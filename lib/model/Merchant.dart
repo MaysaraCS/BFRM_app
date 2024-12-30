@@ -1,36 +1,37 @@
-class Merchant{
-  int? id;
+import 'package:bfrm_app_flutter/model/User.dart';
+
+class Merchant extends User {
   String? logo;
   String? image;
-  String? email;
-  String? token;
-  List<String>? PrimaryGoal;
+  List<String>? primaryGoal;
   String? restaurantPhoto;
   String? contactInfo;
-  String? Address;
+  String? address;
 
   Merchant({
-    this.id,
+    int? id,
+    String? email,
+    String? token,
     this.logo,
     this.image,
-    this.email,
-    this.token,
-    this.PrimaryGoal,
+    this.primaryGoal,
     this.restaurantPhoto,
     this.contactInfo,
-    this.Address
-  });
+    this.address,
+  }) : super(id: id, email: email, token: token);
 
-  factory Merchant.fromJson(Map<String, dynamic> json){
+  // Override the fromJson method to include specific properties
+  factory Merchant.fromJson(Map<String, dynamic> json) {
     return Merchant(
       id: json['id'],
-      logo: json['logo'],
-      image: json['image'],
       email: json['email'],
       token: json['token'],
+      logo: json['logo'],
+      image: json['image'],
       restaurantPhoto: json['restaurant_photo'],
       contactInfo: json['contact_info'],
-      PrimaryGoal: List<String>.from(json['PrimaryGoal'] ?? []),
+      address: json['address'],
+      primaryGoal: List<String>.from(json['PrimaryGoal'] ?? []),
     );
   }
 }

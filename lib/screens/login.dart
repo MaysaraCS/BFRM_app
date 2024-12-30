@@ -3,9 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:bfrm_app_flutter/screens/user_type.dart';
 import 'package:bfrm_app_flutter/screens/signup.dart';
-import 'package:bfrm_app_flutter/screens/OTP_Verify.dart';
 import 'package:bfrm_app_flutter/screens/CustomerHomePage.dart';
-import 'package:bfrm_app_flutter/screens/Password_Recovery.dart'; // Import the PasswordRecoveryPage
+import 'package:bfrm_app_flutter/screens/Password_Recovery.dart';
 import '../constant.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  Future<void> LoginUser() async{
+  Future<void> _loginUser() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
 
@@ -36,13 +35,15 @@ class _LoginPageState extends State<LoginPage> {
         }),
       );
 
-      final responseData = jsonDecode(response.body);
-      if (response.statusCode == 200 && responseData['success'] == true) {
-        // Login success
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'])),
-        );
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
 
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        // Show success message
+        _showMessage(responseData['message']);
+        // Navigate to home page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -50,16 +51,18 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        // Login failed
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'] ?? "Login failed")),
-        );
+        // Show failure message
+        _showMessage(responseData['message'] ?? "Login failed");
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An error occurred. Please try again later.")),
-      );
+      _showMessage("An error occurred. Please try again later.");
     }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -78,22 +81,9 @@ class _LoginPageState extends State<LoginPage> {
                   alignment: Alignment.topLeft,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SignUpPage(
-                            user: User(
-                              email: "",
-                              role: "", // Provide default values
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
-
                 // Logo
                 Center(
                   child: Image.asset(
@@ -103,8 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Signup Image
+                // Login Image
                 Center(
                   child: Image.asset(
                     'lib/assets/login.png',
@@ -113,9 +102,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Welcome back
+                // Welcome Back
                 Center(
-                  child: Text("WELCOME BACK !",
+                  child: const Text(
+                    "WELCOME BACK!",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -123,7 +113,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 // Form Box
                 Container(
                   padding: const EdgeInsets.all(16.0),
@@ -137,11 +126,10 @@ class _LoginPageState extends State<LoginPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 10),
-
                         // Email Field
                         TextFormField(
                           controller: _emailController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: "Enter Your Email",
                             border: OutlineInputBorder(),
                           ),
@@ -156,11 +144,10 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         const SizedBox(height: 10),
-
                         // Password Field
                         TextFormField(
                           controller: _passwordController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: "Enter Your Password",
                             border: OutlineInputBorder(),
                           ),
@@ -176,18 +163,18 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         const SizedBox(height: 10),
-
                         // Forgot Password Text
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const PasswordRecoveryPage(),
+                                builder: (context) =>
+                                const PasswordRecoveryPage(),
                               ),
                             );
                           },
-                          child: Text(
+                          child: const Text(
                             'Forgot Password?',
                             style: TextStyle(
                               color: Colors.blue,
@@ -197,20 +184,9 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 10),
-
+                        // Login Button
                         ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              LoginUser().then((_) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Customerhomepage(),
-                                  ),
-                                );
-                              });
-                            }
-                          },
+                          onPressed: _loginUser,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -229,12 +205,13 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
+                // Sign-Up Prompt
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Do not have account? ',
+                    const Text(
+                      'Do not have an account? ',
                       style: TextStyle(color: Colors.black54, fontSize: 14),
                     ),
                     GestureDetector(
@@ -245,13 +222,13 @@ class _LoginPageState extends State<LoginPage> {
                             builder: (context) => SignUpPage(
                               user: User(
                                 email: "",
-                                role: "", // Provide default values
+                                role: "",
                               ),
                             ),
                           ),
                         );
                       },
-                      child: Text(
+                      child: const Text(
                         'Sign-Up',
                         style: TextStyle(
                           color: Colors.blue,
@@ -262,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
               ],
             ),
           ),

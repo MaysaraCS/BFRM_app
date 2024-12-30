@@ -1,34 +1,34 @@
-class Customer{
-  int? id;
+import 'package:bfrm_app_flutter/model/User.dart';
+
+class Customer extends User {
   String? username;
   String? image;
-  String? email;
-  String? token;
   List<String>? cuisinePreferences;
   List<String>? interest;
-  List<String>? DiningPreferences;
+  List<String>? diningPreferences;
 
   Customer({
-    this.id,
+    int? id,
+    String? email,
+    String? token,
     this.username,
     this.image,
-    this.email,
-    this.token,
     this.cuisinePreferences,
     this.interest,
-    this.DiningPreferences
-  });
+    this.diningPreferences,
+  }) : super(id: id, email: email, token: token);
 
-  factory Customer.fromJson(Map<String, dynamic> json){
+  // Override the fromJson method to include specific properties
+  factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
-        id: json['id'],
-        username: json['username'],
-        image: json['image'],
-        email: json['email'],
-        token: json['token'],
+      id: json['id'],
+      email: json['email'],
+      token: json['token'],
+      username: json['username'],
+      image: json['image'],
       cuisinePreferences: List<String>.from(json['cuisine_preferences'] ?? []),
       interest: List<String>.from(json['interest'] ?? []),
-      DiningPreferences: List<String>.from(json['DiningPreferences'] ?? []),
+      diningPreferences: List<String>.from(json['diningPreferences'] ?? []),
     );
   }
 }

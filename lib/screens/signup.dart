@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:bfrm_app_flutter/screens/OTP_Verify.dart';
+import 'dart:developer';
+
 import '../constant.dart';
-import 'user_type.dart';
+import 'package:bfrm_app_flutter/screens/user_type.dart';
+import 'package:bfrm_app_flutter/screens/SetPasswordPage.dart';
 
 class SignUpPage extends StatefulWidget {
-  final User user; // Receive the User object with role
+  final User user;
 
   const SignUpPage({Key? key, required this.user}) : super(key: key);
 
@@ -18,58 +20,28 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  Future<void> registerUser() async {
-    final String email = _emailController.text.trim();
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
+  Future<void> proceedToPasswordPage() async {
     if (!_formKey.currentState!.validate()) return;
 
-    try {
-      final response = await http.post(
-        Uri.parse(registerURL),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "role": widget.user.role, // Use role from User object
-        }),
-      );
+    final String email = _emailController.text.trim();
+    final String role = widget.user.role ?? 'defaultRole'; // Provide a default value
 
-      final responseData = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        // Registration successful
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'])),
-        );
-
-        // Navigate to OTP Verification Page
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OTPVerificationPage(email: email), // Pass email for OTP
-          ),
-        );
-      } else if (response.statusCode == 401) {
-        // Validation error or email already exists
-        final errors = responseData['errors'];
-        if (errors != null && errors['email'] != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errors['email'][0])),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData['message'] ?? somethingWentWrong)),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'] ?? somethingWentWrong)),
-        );
-      }
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(serverError)),
-      );
-    }
+    // Navigate to SetPasswordPage with email and role
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SetPasswordPage(
+          email: email,
+          role: role,
+        ),
+      ),
+    );
   }
 
   @override
@@ -83,38 +55,27 @@ class _SignUpPageState extends State<SignUpPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Back Button
                 Align(
                   alignment: Alignment.topLeft,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
-
-                // Logo
                 Center(
                   child: Image.asset(
                     'lib/assets/logo.png',
                     height: 80,
-                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Signup Image
                 Center(
                   child: Image.asset(
                     'lib/assets/signup.jpg',
                     height: 150,
-                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Form Box
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
@@ -124,14 +85,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 10),
-
-                        // Email Field
                         TextFormField(
                           controller: _emailController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: "Enter Your Email",
                             border: OutlineInputBorder(),
                           ),
@@ -146,26 +103,17 @@ class _SignUpPageState extends State<SignUpPage> {
                           },
                         ),
                         const SizedBox(height: 20),
-
                         ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              registerUser();
-                            }
-                          },
+                          onPressed: proceedToPasswordPage,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            // padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 50, vertical: 15),
                           ),
-                          child: const Center(
-                            child: Text(
-                              "Next",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
+                          child: const Text("Next", style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -175,26 +123,15 @@ class _SignUpPageState extends State<SignUpPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Already have an account? ',
-                      style: TextStyle(color: Colors.black54, fontSize: 14),
-                    ),
+                    const Text('Already have an account? ',
+                        style: TextStyle(color: Colors.black54)),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context); // Navigate back
-                      },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      onTap: () => Navigator.pop(context),
+                      child: const Text('Login',
+                          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
               ],
             ),
           ),
