@@ -2,25 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../constant.dart';
-import 'package:bfrm_app_flutter/screens/resetPass.dart';
+import 'package:bfrm_app_flutter/screens/login.dart';
 
 
-class PasswordRecoveryPage extends StatefulWidget {
-  const PasswordRecoveryPage({super.key});
+class ResetPasswordPage extends StatefulWidget {
+  final String email; // Receive email from PasswordRecoveryPage
+
+  const ResetPasswordPage({super.key, required this.email});
 
   @override
-  _PasswordRecoveryPageState createState() => _PasswordRecoveryPageState();
+  _ResetPasswordPageState createState() => _ResetPasswordPageState();
 }
 
-class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
-  final TextEditingController _emailController = TextEditingController();
+class _ResetPasswordPageState extends State<ResetPasswordPage> {
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+  TextEditingController();
   bool _isLoading = false;
 
-  Future<void> _sendRecoveryEmail() async {
-    final email = _emailController.text.trim();
+  Future<void> _resetPassword() async {
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (email.isEmpty) {
-      _showMessage('Please enter your email', isError: true);
+    if (password.isEmpty || confirmPassword.isEmpty) {
+      _showMessage('Both fields are required', isError: true);
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showMessage('Passwords do not match', isError: true);
       return;
     }
 
@@ -30,9 +40,13 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
 
     try {
       final response = await http.post(
-        Uri.parse(forgotPassURL),
+        Uri.parse(resetPassURL),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
+        body: jsonEncode({
+          'email': widget.email, // Use the email passed from PasswordRecoveryPage
+          'password': password,
+          'password_confirmation': confirmPassword,
+        }),
       );
 
       setState(() {
@@ -40,17 +54,17 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
       });
 
       if (response.statusCode == 200) {
-        _showMessage('Password reset link has been sent to your email.');
+        _showMessage('Password reset successful!');
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ResetPasswordPage(email: email),
+            builder: (context) => LoginPage(),
           ),
         );
       } else {
         final responseData = jsonDecode(response.body);
         _showMessage(
-          responseData['message'] ?? 'Failed to send reset link. Please try again.',
+          responseData['message'] ?? 'Failed to reset password. Try again.',
           isError: true,
         );
       }
@@ -130,16 +144,22 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextFormField(
-                    controller: _emailController,
+                    controller: _passwordController,
+                    obscureText: true,
                     decoration: const InputDecoration(
-                      labelText: "Enter Your Email",
+                      labelText: "Type your New Password",
                       border: OutlineInputBorder(),
+                      hintText: "Must be at least 8 characters",
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    "Please check your email inbox after pressing confirm",
-                    style: TextStyle(color: Colors.black54, fontSize: 12),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: "Confirm Your New Password",
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ],
               ),
@@ -148,7 +168,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
 
             // Confirm Button
             ElevatedButton(
-              onPressed: _isLoading ? null : _sendRecoveryEmail,
+              onPressed: _isLoading ? null : _resetPassword,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
@@ -159,7 +179,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
               child: _isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
                   : const Text(
-                "Confirm",
+                "Next",
                 style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),

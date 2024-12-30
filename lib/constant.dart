@@ -7,6 +7,8 @@ const loginURL = baseURL + '/login';
 const registerURL = baseURL + '/register';
 const OTPURL = baseURL + '/verify-otp';
 const logoutURL = baseURL + '/logout';
+const forgotPassURL = baseURL + '/forgot-password';
+const resetPassURL = baseURL + '/reset-password';
 const userURL = baseURL + '/user';
 
 const customerDetailURL = baseURL + '/customerDetailURL';
