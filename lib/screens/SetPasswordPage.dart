@@ -45,20 +45,13 @@ class _SetPasswordPageState extends State<SetPasswordPage> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 && responseData['success'] == true) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User Registered Successfully. Check your email for OTP'),
-          ),
-        );
-
-        // Navigate to OTP Verification Page
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OTPVerificationPage(email: widget.email),
           ),
         );
+
       } else if (responseData['errors']?['password'] != null) {
         // Display specific password errors
         _showMessage(responseData['errors']['password'].join('\n'));

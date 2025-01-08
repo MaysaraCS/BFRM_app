@@ -11,11 +11,11 @@ class Customer extends User {
     int? id,
     String? email,
     String? token,
-    this.username,
+    required this.username,
     this.image,
-    this.cuisinePreferences,
-    this.interest,
-    this.diningPreferences,
+    this.cuisinePreferences = const [],
+    this.interest = const [],
+    this.diningPreferences = const [],
   }) : super(id: id, email: email, token: token);
 
   // Override the fromJson method to include specific properties

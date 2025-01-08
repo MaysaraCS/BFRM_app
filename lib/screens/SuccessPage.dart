@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bfrm_app_flutter/screens/UsernamePage.dart'; // Import the UsernamePage
 
 class SuccessPage extends StatelessWidget {
   @override
@@ -57,8 +58,11 @@ class SuccessPage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 20.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to the next screen or home screen
-                  Navigator.pop(context);
+                  // Navigate to the UsernamePage
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => UsernamePage()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,

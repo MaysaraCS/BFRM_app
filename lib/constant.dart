@@ -1,7 +1,8 @@
 // ----- STRINGS ------
 import 'package:flutter/material.dart';
 
-const baseURL = 'http://192.168.8.107:8080/api';
+const baseURL = 'http://192.168.8.112:8080/api';
+// const baseURL = 'http://localhost:8080/api';
 
 const loginURL = baseURL + '/login';
 const registerURL = baseURL + '/register';
@@ -9,11 +10,14 @@ const OTPURL = baseURL + '/verify-otp';
 const logoutURL = baseURL + '/logout';
 const forgotPassURL = baseURL + '/forgot-password';
 const resetPassURL = baseURL + '/reset-password';
+const customerpreferenceURL = baseURL + '/customer-preference';
+
+
 const userURL = baseURL + '/user';
 
 const customerDetailURL = baseURL + '/customerDetailURL';
 
-const merchantDetailURL = baseURL + '/merchantDetailURL';
+const merchantURL = baseURL + '/merchant';
 
 // ----- Errors -----
 const serverError = 'Server error';

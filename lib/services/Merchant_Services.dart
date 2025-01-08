@@ -15,7 +15,7 @@ Future<ApiResponse> getMerchantDetail() async {
   try {
     String token = await getToken();
     final response = await http.get(
-      Uri.parse(merchantDetailURL),
+      Uri.parse(merchantURL),
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer $token'
@@ -51,7 +51,7 @@ Future<ApiResponse> updateMerchantDetails({
   try {
     String token = await getToken();
     final response = await http.put(
-      Uri.parse(merchantDetailURL),
+      Uri.parse(merchantURL),
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer $token'
