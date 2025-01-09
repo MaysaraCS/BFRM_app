@@ -1,3 +1,4 @@
+import 'package:bfrm_app_flutter/model/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http; // For API requests
 import 'dart:convert'; // For JSON encoding and decoding
@@ -5,8 +6,8 @@ import '../constant.dart'; // Assuming this contains customerpreferenceURL
 import 'package:bfrm_app_flutter/screens/CouponPreferencePage.dart';
 
 class CuisinePreferencesPage extends StatefulWidget {
-  final String username; // Assume you passed username in the previous page
-  const CuisinePreferencesPage({super.key, required this.username});
+  final Login usernameData; // Assume you passed username in the previous page
+  const CuisinePreferencesPage({super.key, required this.usernameData});
 
   @override
   State<CuisinePreferencesPage> createState() => _CuisinePreferencesPageState();
@@ -38,40 +39,49 @@ class _CuisinePreferencesPageState extends State<CuisinePreferencesPage> {
       );
       return;
     }
+    //
+    // try {
+    //   final response = await http.post(
+    //     Uri.parse(customerpreferenceURL), // Assuming it's in constant.dart
+    //     headers: {"Content-Type": "application/json"}, // Ensure JSON headers
+    //     body: jsonEncode({
+    //       'username': widget.usernameData,
+    //       'cuisines': selectedCuisines,
+    //     }),
+    //   );
+    //   final responseData = jsonDecode(response.body);
+    //
+    //   if (response.statusCode == 200 && responseData['status'] == true) {
+    //     Navigator.push(
+    //       context,
+    //       MaterialPageRoute(
+    //         builder: (context) => CouponPreferencePage(
+    //           username: widget.usernameData,  // Pass the username
+    //           cuisinePreferences: selectedCuisines, // Pass the selected cuisine preferences
+    //         ),
+    //       ),
+    //     );
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       const SnackBar(content: Text('Preferences saved successfully!')),
+    //     );
+    //   } else {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text('Failed to save preferences: ${response.body}')),
+    //     );
+    //   }
+    // } catch (e) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text('Error: Failed to connect to the server')),
+    //   );
+    // }
 
-    try {
-      final response = await http.post(
-        Uri.parse(customerpreferenceURL), // Assuming it's in constant.dart
-        headers: {"Content-Type": "application/json"}, // Ensure JSON headers
-        body: jsonEncode({
-          'username': widget.username,
-          'cuisines': selectedCuisines,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CouponPreferencePage(
-              username: widget.username,  // Pass the username
-              cuisinePreferences: selectedCuisines, // Pass the selected cuisine preferences
-            ),
-          ),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preferences saved successfully!')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save preferences: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Failed to connect to the server')),
-      );
-    }
+    widget.usernameData.cuisneType = selectedCuisines;
+    Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CouponPreferencePage(usernameData:widget.usernameData),
+              ),
+            );
   }
 
   @override

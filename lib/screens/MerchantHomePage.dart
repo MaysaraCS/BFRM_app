@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-class Customerhomepage extends StatefulWidget {
-  const Customerhomepage({super.key});
+
+class Merchanthomepage extends StatefulWidget {
+  const Merchanthomepage({super.key});
 
   @override
-  State<Customerhomepage> createState() => _CustomerhomepageState();
+  State<Merchanthomepage> createState() => _MerchanthomepageState();
 }
 
-class _CustomerhomepageState extends State<Customerhomepage> {
+class _MerchanthomepageState extends State<Merchanthomepage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,7 +18,7 @@ class _CustomerhomepageState extends State<Customerhomepage> {
       ),
       body: const Center(
         child: Text(
-          "Hello! Customer Home page in progress",
+          "Hello! Merchant Home page in progress",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),

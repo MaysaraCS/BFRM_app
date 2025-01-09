@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:bfrm_app_flutter/screens/UsernamePage.dart'; // Import the UsernamePage
+import 'package:bfrm_app_flutter/screens/UsernamePage.dart';
+
+import '../model/Login.dart'; // Import the UsernamePage
 
 class SuccessPage extends StatelessWidget {
+  //final String email;
+  final Login usernameData;
+  const SuccessPage({Key? key, required this.usernameData}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +67,7 @@ class SuccessPage extends StatelessWidget {
                   // Navigate to the UsernamePage
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => UsernamePage()),
+                    MaterialPageRoute(builder: (context) => UsernamePage(usernameData:usernameData)),
                   );
                 },
                 style: ElevatedButton.styleFrom(

@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      //home:UsernamePage(usernameData:''),
       home:WelcomePage(),
 
       // home: DiningPreferencesPage(

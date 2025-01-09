@@ -3,9 +3,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bfrm_app_flutter/screens/SuccessPage.dart';
 import '../constant.dart';
+import '../model/Login.dart';
 
 class OTPVerificationPage extends StatefulWidget {
   final String email; // Email passed from the previous page
+  //final Login usernameData;
+
 
   const OTPVerificationPage({Key? key, required this.email}) : super(key: key);
 
@@ -49,11 +52,16 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('OTP verified successfully!')),
           );
+          Login loginData = Login();
+          loginData.email = widget.email;
+
+
+
 
           // Navigate to the SuccessPage
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => SuccessPage()),
+            MaterialPageRoute(builder: (context) => SuccessPage(usernameData: loginData,)),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -79,6 +87,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevent widget resizing
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,

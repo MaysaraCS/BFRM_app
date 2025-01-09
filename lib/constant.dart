@@ -10,6 +10,7 @@ const OTPURL = baseURL + '/verify-otp';
 const logoutURL = baseURL + '/logout';
 const forgotPassURL = baseURL + '/forgot-password';
 const resetPassURL = baseURL + '/reset-password';
+
 const customerpreferenceURL = baseURL + '/customer-preference';
 
 

@@ -38,8 +38,9 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
       setState(() {
         _isLoading = false;
       });
+      final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && responseData['status'] == true) {
         _showMessage('Password reset link has been sent to your email.');
         Navigator.push(
           context,

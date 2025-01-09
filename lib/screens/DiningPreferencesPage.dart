@@ -1,3 +1,4 @@
+import 'package:bfrm_app_flutter/model/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
@@ -6,16 +7,18 @@ import '../constant.dart'; // Assuming this contains customerpreferenceURL
 
 
 class DiningPreferencesPage extends StatefulWidget {
-  final String username;
-  final List<String> cuisinePreferences;
-  final bool prefersCoupons;
+  final Login usernameData;
+  const DiningPreferencesPage({super.key, required this.usernameData});
 
-  const DiningPreferencesPage({
-    Key? key,
-    required this.username,
-    required this.cuisinePreferences,
-    required this.prefersCoupons,
-  }) : super(key: key);
+  // final List<String> cuisinePreferences;
+  // final bool prefersCoupons;
+
+  // const DiningPreferencesPage({
+  //   Key? key,
+  //   required this.usernameData,
+  //   required this.cuisinePreferences,
+  //   required this.prefersCoupons,
+  // }) : super(key: key);
 
   @override
   State<DiningPreferencesPage> createState() => _DiningPreferencesPageState();
@@ -52,11 +55,14 @@ class _DiningPreferencesPageState extends State<DiningPreferencesPage> {
 
     // Prepare data to send to the API
     final Map<String, dynamic> requestData = {
-      "username": widget.username,
-      "cuisinePreferences": widget.cuisinePreferences,
-      "prefersCoupons": widget.prefersCoupons,
-      "diningPreferences": selectedPreferences,
+      "username": widget.usernameData.username,
+      "cuisine_preferences": widget.usernameData.cuisneType,
+      "prefers_coupons": widget.usernameData.couponType,
+      "dining_preferences": selectedPreferences,
+      "email": widget.usernameData.email,
+      "interests" : widget.usernameData.couponType,
     };
+    print(requestData);
 
     try {
       // Make the API call
@@ -65,8 +71,14 @@ class _DiningPreferencesPageState extends State<DiningPreferencesPage> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(requestData),
       );
+      final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('Response Data: ${responseData}');
+
+
+      if ((response.statusCode == 200 || response.statusCode == 201) && responseData['success'] == true) {
         // Successfully saved preferences
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Preferences saved successfully')),

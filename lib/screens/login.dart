@@ -6,6 +6,7 @@ import 'package:bfrm_app_flutter/screens/signup.dart';
 import 'package:bfrm_app_flutter/screens/CustomerHomePage.dart';
 import 'package:bfrm_app_flutter/screens/Password_Recovery.dart';
 import '../constant.dart';
+import 'package:bfrm_app_flutter/screens/MerchantHomePage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,16 +41,29 @@ class _LoginPageState extends State<LoginPage> {
 
       final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && responseData['success'] == true) {
+      if (response.statusCode == 200 && responseData['status'] == true) {
         // Show success message
         _showMessage(responseData['message']);
-        // Navigate to home page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const Customerhomepage(),
-          ),
-        );
+
+        // Get the user's role
+        String userRole = responseData['role'];
+
+        // Navigate to the appropriate home page
+        if (userRole == 'customer') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const Customerhomepage(),
+            ),
+          );
+        } else if (userRole == 'merchant') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>  Merchanthomepage(),
+            ),
+          );
+        }
       } else {
         // Show failure message
         _showMessage(responseData['message'] ?? "Login failed");
@@ -58,6 +72,7 @@ class _LoginPageState extends State<LoginPage> {
       _showMessage("An error occurred. Please try again later.");
     }
   }
+
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

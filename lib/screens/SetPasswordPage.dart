@@ -39,18 +39,21 @@ class _SetPasswordPageState extends State<SetPasswordPage> {
         }),
       );
 
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      //print('Response Status: ${response.statusCode}');
+      //print('Response Body: ${response.body}');
 
       final responseData = jsonDecode(response.body);
+      //print('error in line 46');
 
-      if (response.statusCode == 200 && responseData['success'] == true) {
+      if (response.statusCode == 200 && responseData['status'] == true) {
+        //print('error in line 49');
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OTPVerificationPage(email: widget.email),
           ),
         );
+        //print('error in line 56');
 
       } else if (responseData['errors']?['password'] != null) {
         // Display specific password errors

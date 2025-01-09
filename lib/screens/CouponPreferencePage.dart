@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
 import 'package:bfrm_app_flutter/screens/DiningPreferencesPage.dart';
-import '../constant.dart'; // Assuming this contains customerpreferenceURL
+import '../constant.dart';
+import '../model/Login.dart'; // Assuming this contains customerpreferenceURL
 
 class CouponPreferencePage extends StatefulWidget {
-  final String username;
-  final List<String> cuisinePreferences;
+  final Login usernameData; // Assume you passed username in the previous page
+  const CouponPreferencePage({super.key, required this.usernameData});
+  //final List<String> cuisinePreferences;
 
-  const CouponPreferencePage({
-    Key? key,
-    required this.username,
-    required this.cuisinePreferences,
-  }) : super(key: key);
+
 
   @override
   State<CouponPreferencePage> createState() => _CouponPreferencePageState();
@@ -44,50 +42,55 @@ class _CouponPreferencePageState extends State<CouponPreferencePage> {
       );
       return;
     }
+    //
+    // // Prepare data to send to the API
+    // final Map<String, dynamic> requestData = {
+    //   "username": widget.username,
+    //   "couponPreferences": selectedPreferences,
+    // };
+    //
+    // try {
+    //   // Make the API call
+    //   final response = await http.post(
+    //     Uri.parse(customerpreferenceURL),
+    //     headers: {"Content-Type": "application/json"},
+    //     body: jsonEncode(requestData),
+    //   );
+    //
+    //   final responseData = jsonDecode(response.body);
+    //
+    //   if (response.statusCode == 200 && responseData['status'] == true) {
+    //     // Successfully saved preferences, now navigate to DiningPreferencesPage
+    //     Navigator.push(
+    //       context,
+    //       MaterialPageRoute(
+    //         builder: (context) => DiningPreferencesPage(
+    //           username: widget.username,  // Pass the username
+    //           cuisinePreferences: widget.cuisinePreferences, // Pass the selected cuisine preferences
+    //           prefersCoupons: _isCoupon, // Pass the prefersCoupons value
+    //         ),
+    //       ),
+    //     );
+    //   } else {
+    //     // Handle API errors
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text('Failed to save preferences: ${response.body}')),
+    //     );
+    //   }
+    // } catch (error) {
+    //   // Handle network or other errors
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('Error: $error')),
+    //   );
+    // }
 
-    // Prepare data to send to the API
-    final Map<String, dynamic> requestData = {
-      "username": widget.username,
-      "couponPreferences": selectedPreferences,
-    };
-
-    try {
-      // Make the API call
-      final response = await http.post(
-        Uri.parse(customerpreferenceURL),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(requestData),
-      );
-
-      if (response.statusCode == 201) {
-        // Successfully saved preferences
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preferences saved successfully')),
-        );
-
-        // Navigate to DiningPreferencesPage
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DiningPreferencesPage(
-              username: widget.username,
-              cuisinePreferences: widget.cuisinePreferences,
-              prefersCoupons: true, // Assuming the user prefers coupons
-            ),
-          ),
-        );
-      } else {
-        // Handle API errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save preferences: ${response.body}')),
-        );
-      }
-    } catch (error) {
-      // Handle network or other errors
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
-      );
-    }
+    widget.usernameData.couponType = selectedPreferences;
+    Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DiningPreferencesPage(usernameData:widget.usernameData),
+              ),
+            );
   }
 
   @override
