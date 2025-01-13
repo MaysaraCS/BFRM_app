@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:bfrm_app_flutter/screens/SuccessPage.dart';
 import '../constant.dart';
 import '../model/Login.dart';
+import 'package:bfrm_app_flutter/screens/SuccessMerchantPage.dart';
+
+
 
 class OTPVerificationPage extends StatefulWidget {
   final String email; // Email passed from the previous page
@@ -44,24 +47,32 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       setState(() {
         isLoading = false;
       });
+      final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && responseData['status'] == true) {
         final data = jsonDecode(response.body);
+        String userRole = responseData['role'];
 
-        if (data['status'] == true) {
+        if (data['status'] == true && userRole == 'customer') {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('OTP verified successfully!')),
           );
           Login loginData = Login();
           loginData.email = widget.email;
 
-
-
-
           // Navigate to the SuccessPage
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => SuccessPage(usernameData: loginData,)),
+          );
+        }
+        else if (data['status'] == true && userRole == 'merchant') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP verified successfully!')),
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Successmerchantpage()),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

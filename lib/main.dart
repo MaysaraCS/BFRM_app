@@ -8,6 +8,8 @@ import 'package:bfrm_app_flutter/screens/SetPasswordPage.dart';
 import 'package:bfrm_app_flutter/screens/cuisine_preferences_page.dart';
 import 'package:bfrm_app_flutter/screens/CouponPreferencePage.dart';
 import 'package:bfrm_app_flutter/screens/DiningPreferencesPage.dart';
+import 'package:bfrm_app_flutter/screens/RestaurantName.dart';
+
 
 void main() {
   runApp(MyApp());
