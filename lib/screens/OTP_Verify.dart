@@ -70,9 +70,12 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('OTP verified successfully!')),
           );
+          Login loginData = Login();
+          loginData.email = widget.email;
+
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Successmerchantpage()),
+            MaterialPageRoute(builder: (context) => Successmerchantpage(usernameData: loginData,)),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

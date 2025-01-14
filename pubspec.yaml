@@ -36,8 +36,18 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   #get: ^4.6.6
-  http: ^1.2.2
+  #http: ^1.2.2
   shared_preferences: ^2.3.4
+  google_maps_flutter: ^2.10.0
+  geolocator: ^13.0.2
+  flutter_google_places: ^0.3.0
+  awesome_snackbar_content: ^0.1.5
+  #http: ^1.2.2
+  http: ^0.13.1
+  google_api_headers: ^1.6.0
+  image_picker: ^1.1.2
+
+
 
 dev_dependencies:
   flutter_test:
@@ -91,3 +101,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+dependency_overrides:
+  google_api_headers:
+    git:
+      url: https://github.com/zeshuaro/google_api_headers.git
+
+

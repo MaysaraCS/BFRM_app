@@ -1,3 +1,4 @@
+import 'package:bfrm_app_flutter/screens/MerchantHomePage.dart';
 import 'package:bfrm_app_flutter/screens/UsernamePage.dart';
 import 'package:flutter/material.dart';
 import 'package:bfrm_app_flutter/screens/welcome_page.dart';
@@ -25,7 +26,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       //home:UsernamePage(usernameData:''),
-      home:WelcomePage(),
+      //home:WelcomePage(),
+      home:Merchanthomepage(),
 
       // home: DiningPreferencesPage(
       //   username: '',

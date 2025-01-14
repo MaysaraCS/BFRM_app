@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:bfrm_app_flutter/screens/RestaurantName.dart';
 
+import '../model/Login.dart';
 
-class Successmerchantpage extends StatefulWidget {
-  const Successmerchantpage({super.key});
 
-  @override
-  State<Successmerchantpage> createState() => _SuccessmerchantpageState();
-}
+class Successmerchantpage extends StatelessWidget {
+  //final String email;
+  final Login usernameData;
+  const Successmerchantpage({Key? key, required this.usernameData}) : super(key: key);
 
-class _SuccessmerchantpageState extends State<Successmerchantpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,7 +68,7 @@ class _SuccessmerchantpageState extends State<Successmerchantpage> {
                   // Navigate to the UsernamePage
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => Restaurantname()),
+                    MaterialPageRoute(builder: (context) => Restaurantname(usernameData:usernameData)),
                   );
                 },
                 style: ElevatedButton.styleFrom(

@@ -12,6 +12,10 @@ const forgotPassURL = baseURL + '/forgot-password';
 const resetPassURL = baseURL + '/reset-password';
 
 const customerpreferenceURL = baseURL + '/customer-preference';
+const businessRegistrationURL = baseURL + '/business-registration';
+
+const couponURL = baseURL + '/coupons';
+
 
 
 const userURL = baseURL + '/user';
