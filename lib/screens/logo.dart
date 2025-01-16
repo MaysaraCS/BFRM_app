@@ -34,6 +34,7 @@ class _LogoState extends State<Logo> {
     if (_selectedImage != null) {
       widget.usernameData.restaurantLogo = _selectedImage!.path; // Save file path to model
 
+      //widget.usernameData.restaurantPhoto = _selectedImage!;
       // Navigate to the next page
       Navigator.push(
         context,

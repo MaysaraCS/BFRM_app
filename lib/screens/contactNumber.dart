@@ -4,6 +4,8 @@ import '../model/Login.dart';
 import '../constant.dart';
 import 'dart:convert';
 import 'package:bfrm_app_flutter/screens/beaconOrder.dart';
+import 'package:bfrm_app_flutter/screens/MerchantHomePage.dart';
+
 
 import 'package:http/http.dart' as http;
 
@@ -18,9 +20,12 @@ class Contactnumber extends StatefulWidget {
 }
 
 class _ContactnumberState extends State<Contactnumber> {
+
   final TextEditingController _contactController = TextEditingController();
 
   Future<void> _submitRestaurantContact() async {
+    //final selectedPreferences = <String>[];
+
     final String restaurantContact = _contactController.text.trim();
     widget.usernameData.restaurantContact = restaurantContact;
 
@@ -32,14 +37,19 @@ class _ContactnumberState extends State<Contactnumber> {
     // );
     final Map<String, dynamic> requestData = {
       "email": widget.usernameData.email,
-      "primary_goal": widget.usernameData.PrimGoal,
-      "prefers_coupons": widget.usernameData.couponType,
-      "location	": widget.usernameData.restaurantLocation,
-      "logo	": widget.usernameData.restaurantLogo,
-      "photo	": widget.usernameData.restaurantPhoto,
-      "phone_number		": restaurantContact,
+      "restaurant_name": widget.usernameData.restaurantname,
+      "primary_goal": widget.usernameData.PrimGoal.toString(),
+      "other_goal": widget.usernameData.other_goal,
+      "location": widget.usernameData.restaurantLocation,
+      "logo": widget.usernameData.restaurantLogo,
+      "photo": widget.usernameData.restaurantPhoto,
+      "phone_number": restaurantContact,
     };
+    print("////////// request data ->>>>>> :");
+    print(requestData);
 
+
+    print(Uri.parse(businessRegistrationURL));
     try {
       // Make the API call
       final response = await http.post(
@@ -47,6 +57,10 @@ class _ContactnumberState extends State<Contactnumber> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(requestData),
       );
+      print('///////////////////////////');
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      //print('Response Data: ${responseData}');
       final responseData = jsonDecode(response.body);
 
       print('Response Status: ${response.statusCode}');
@@ -64,7 +78,7 @@ class _ContactnumberState extends State<Contactnumber> {
         // Navigate to CustomerHomepage
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Beaconorder()),
+          MaterialPageRoute(builder: (context) => Merchanthomepage()),
         );
       } else {
         // Handle API errors

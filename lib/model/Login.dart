@@ -10,6 +10,7 @@ class Login{
   String? restaurantname;
   List<String> PrimGoal = [];
   String? restaurantLocation;
+  String? other_goal;
   String? restaurantLogo;
   String? restaurantPhoto;
   String? restaurantContact;

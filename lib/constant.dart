@@ -16,6 +16,8 @@ const businessRegistrationURL = baseURL + '/business-registration';
 
 const couponURL = baseURL + '/coupons';
 
+const discountURL = baseURL + '/discounts';
+
 
 
 const userURL = baseURL + '/user';

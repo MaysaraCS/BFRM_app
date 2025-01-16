@@ -33,8 +33,10 @@ class _AddrestaurantphotoState extends State<Addrestaurantphoto> {
   // Function to handle "SAVE" button click
   Future<void> _submitRestaurantPhoto() async {
     if (_selectedImage != null) {
-      widget.usernameData.restaurantPhoto = _selectedImage!.path; // Save file path to model
+      widget.usernameData.restaurantPhoto = _selectedImage!.path;
+      // Save file path to model
 
+      //widget.usernameData.restaurantPhoto = _selectedImage!;
       // Navigate to the next page
       Navigator.push(
         context,
