@@ -178,13 +178,16 @@ class _MerchanthomepageState extends State<Merchanthomepage> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => Editdiscount(discount: discount),
-                              //   ),
-                              // ).then((_) => _fetchDiscounts());
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditDiscount(discount: discount),
+                                ),
+                              );
+                              if (result == true) {
+                                _fetchDiscounts(); // Refresh discounts after editing
+                              }
                             },
                           ),
                           IconButton(
