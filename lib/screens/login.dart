@@ -7,6 +7,8 @@ import 'package:bfrm_app_flutter/screens/CustomerHomePage.dart';
 import 'package:bfrm_app_flutter/screens/Password_Recovery.dart';
 import '../constant.dart';
 import 'package:bfrm_app_flutter/screens/MerchantHomePage.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Add this
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -42,6 +44,8 @@ class _LoginPageState extends State<LoginPage> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 && responseData['status'] == true) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', responseData['token']);
         // Show success message
         _showMessage(responseData['message']);
 

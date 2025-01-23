@@ -18,6 +18,9 @@ const couponURL = baseURL + '/coupons';
 
 const discountURL = baseURL + '/discounts';
 
+const favoriteURL = baseURL + '/favorites';
+
+
 
 
 const userURL = baseURL + '/user';
