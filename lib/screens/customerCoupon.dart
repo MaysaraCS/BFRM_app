@@ -21,11 +21,17 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
   }
 
   Future<void> _fetchCoupons() async {
-    final response = await http.get(Uri.parse(couponURL));
-    if (response.statusCode == 200) {
-      setState(() {
-        _coupons = json.decode(response.body);
-      });
+    try {
+      final response = await http.get(Uri.parse(couponURL));
+      if (response.statusCode == 200) {
+        setState(() {
+          _coupons = json.decode(response.body);
+        });
+      } else {
+        print('Failed to load coupons');
+      }
+    } catch (e) {
+      print('Error fetching coupons: $e');
     }
   }
 
@@ -169,8 +175,9 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      Redeemcoupon()),
+                                  builder: (context) => Redeemcoupon(
+                                    coupon: coupon,
+                                  )),
                             );
                           },
                           child: Text('Redeem'),
