@@ -56,6 +56,7 @@ class _NewCouponState extends State<NewCoupon> {
       Uri.parse(couponURL),
     );
 
+
     request.files.add(await http.MultipartFile.fromPath('photo', _image!.path));
     request.fields['description'] = _descriptionController.text;
     request.fields['percentage'] = _selectedPercentage!;
