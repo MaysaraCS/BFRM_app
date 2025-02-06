@@ -124,7 +124,12 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
               itemCount: _filteredCoupons.length,
               itemBuilder: (context, index) {
                 final coupon = _filteredCoupons[index];
-                return Card(
+                List <String> scannedBeacon = [
+                  "C3:00:00:1C:76:52",
+                  "C3:00:00:1C:76:51",
+                  "C3:00:00:1C:76:53"];
+                bool isExist = scannedBeacon.contains(coupon["beacon_id"]);
+                return isExist == true ? Card(
                   margin: EdgeInsets.all(12.0),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -162,6 +167,16 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
+                                coupon['beacon_id'],
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                isExist.toString(),
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
                                 'Expires: ${coupon['expiry_date']}',
                                 style: TextStyle(
                                     fontSize: 14,
@@ -188,7 +203,7 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
                       ],
                     ),
                   ),
-                );
+                ):Container();
               },
             ),
           ),
