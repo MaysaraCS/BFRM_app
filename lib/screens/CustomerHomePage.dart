@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // Add this import to handle JSON decoding
+import 'dart:io';
 
 import '../constant.dart';
 
@@ -91,7 +92,7 @@ class _CustomerhomepageState extends State<Customerhomepage> {
     }
   }
 
-  void _shareDiscount(String photo, String description) {
+  _shareDiscount(String photo, String description) {
     Share.share('Check out this discount: $description\nPhoto: $photo');
   }
 
@@ -101,15 +102,11 @@ class _CustomerhomepageState extends State<Customerhomepage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(
-          'Customer Home',
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
       ),
       body: _discounts.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
+
         itemCount: _discounts.length,
         itemBuilder: (context, index) {
           final discount = _discounts[index];

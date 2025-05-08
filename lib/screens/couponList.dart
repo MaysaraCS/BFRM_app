@@ -25,22 +25,48 @@ class _CouponListPageState extends State<CouponListPage> {
   }
 
   Future<void> _fetchCoupons() async {
-    final response = await http.get(Uri.parse(couponURL));
-    if (response.statusCode == 200) {
-      setState(() {
-        _coupons = json.decode(response.body);
-      });
+    try {
+      final response = await http.get(Uri.parse(couponURL));
+      if (response.statusCode == 200) {
+        setState(() {
+          _coupons = json.decode(response.body);
+          // Sort coupons by recency (assuming 'created_at' is a timestamp field)
+          _coupons.sort((a, b) => b['created_at'].compareTo(a['created_at']));
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch coupons')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred while fetching coupons')),
+      );
     }
   }
 
   Future<void> _deleteCoupon(int id) async {
-    final response = await http.delete(Uri.parse('http://192.168.8.112:8080/api/coupons/$id'));
-    if (response.statusCode == 200) {
-      setState(() {
-        _coupons.removeWhere((coupon) => coupon['id'] == id);
-      });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Coupon deleted successfully')));
+    try {
+      final response = await http.delete(
+        Uri.parse('http://192.168.0.197:8080/api/coupons/$id'),
+        headers: {'Content-Type': 'application/json'}, // Add headers if needed
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          _coupons.removeWhere((coupon) => coupon['id'] == id);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Coupon deleted successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete coupon')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred while deleting coupon')),
+      );
     }
   }
 
@@ -90,7 +116,6 @@ class _CouponListPageState extends State<CouponListPage> {
       ),
       body: Column(
         children: [
-
           const SizedBox(height: 20),
           Expanded(
             child: ListView.builder(
@@ -109,12 +134,13 @@ class _CouponListPageState extends State<CouponListPage> {
                           height: 100,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8.0),
-                            image: DecorationImage(
-                              image: NetworkImage(
-                                'http://192.168.8.112:8080/storage/${coupon['photo']}',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
+                          ),
+                          child: Image.network(
+                            'http://192.168.0.197:8080/storage/${coupon['photo']}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(Icons.broken_image, size: 100, color: Colors.grey);
+                            },
                           ),
                         ),
                         SizedBox(width: 16),

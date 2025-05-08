@@ -51,6 +51,10 @@ dependencies:
   permission_handler: ^11.3.1
   #qr_code_scanner: ^0.7.0
   mobile_scanner: ^6.0.3
+  flutter_blue_plus: 1.32.12
+  get: ^4.6.6
+
+
 
 
 

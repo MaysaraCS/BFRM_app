@@ -1,23 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:bfrm_app_flutter/screens/redeemCoupon.dart';
-
+import 'package:permission_handler/permission_handler.dart';
+import 'package:get/get.dart';
 import '../constant.dart';
 
-class CustomerCouponPage extends StatefulWidget {
+class BeaconController extends StatefulWidget {
+  const BeaconController({super.key});
+
   @override
-  _CustomerCouponPageState createState() => _CustomerCouponPageState();
+  State<BeaconController> createState() => _BeaconControllerState();
 }
 
-class _CustomerCouponPageState extends State<CustomerCouponPage> {
+class _BeaconControllerState extends State<BeaconController> {
   List<dynamic> _coupons = [];
   String? _selectedPercentageFilter;
+  List<String> scannedBeacon = []; // To hold the dynamically scanned beacon IDs
 
   @override
   void initState() {
     super.initState();
     _fetchCoupons();
+    scanDevices(); // Start scanning for devices when the page loads
+  }
+
+  // Request location and Bluetooth permission, then start scanning
+  Future<void> scanDevices() async {
+    // Request location permission first (required for scanning)
+    PermissionStatus locationPermission = await Permission.location.request();
+
+    if (locationPermission.isGranted) {
+      // Request Bluetooth Scan permission
+      PermissionStatus bluetoothPermission = await Permission.bluetoothScan.request();
+
+      if (bluetoothPermission.isGranted) {
+        FlutterBluePlus.startScan(continuousUpdates: true); // Continuous scan for devices
+
+        FlutterBluePlus.onScanResults.listen((results) async {
+          // Loop through the scan results and collect matching beacon IDs
+          for (var result in results) {
+            String scannedBeaconId = result.device.remoteId.toString(); // Get the beacon ID from scan result
+
+            // Check if this scanned beacon ID matches any coupon's beacon_id
+            if (_coupons.any((coupon) => coupon["beacon_id"] == scannedBeaconId)) {
+              setState(() {
+                scannedBeacon.add(scannedBeaconId); // Add it to the list of scanned beacons
+              });
+            }
+          }
+        }, onError: (error) {
+          print("Scan error: $error");
+        });
+      } else {
+        print("Bluetooth scan permission denied.");
+      }
+    } else {
+      print("Location permission denied.");
+    }
   }
 
   Future<void> _fetchCoupons() async {
@@ -124,13 +165,12 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
               itemCount: _filteredCoupons.length,
               itemBuilder: (context, index) {
                 final coupon = _filteredCoupons[index];
-                List <String> scannedBeacon = [
-                  "C3:00:00:1C:76:52",
-                  "C3:00:00:1C:76:51",
-                  "C3:00:00:1C:76:53",
-                  "AC:23:3F:56:1A:6C"];
+
+                // Check if the coupon's beacon_id exists in the scanned beacons list
                 bool isExist = scannedBeacon.contains(coupon["beacon_id"]);
-                return isExist == true ? Card(
+
+                return isExist
+                    ? Card(
                   margin: EdgeInsets.all(12.0),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -158,8 +198,7 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
                               Text(
                                 '${coupon['percentage']}% off',
                                 style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
+                                    fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -173,15 +212,8 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                isExist.toString(),
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
                                 'Expires: ${coupon['expiry_date']}',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black54),
+                                style: TextStyle(fontSize: 14, color: Colors.black54),
                               ),
                             ],
                           ),
@@ -204,7 +236,8 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
                       ],
                     ),
                   ),
-                ):Container();
+                )
+                    : Container();
               },
             ),
           ),
@@ -213,3 +246,4 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> {
     );
   }
 }
+

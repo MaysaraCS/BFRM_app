@@ -16,8 +16,8 @@ class _NewCouponState extends State<NewCoupon> {
   File? _image;
   String? _selectedPercentage;
   DateTime? _selectedDate;
-
   final _descriptionController = TextEditingController();
+  final _beaconIdController = TextEditingController(); // New controller for Beacon ID
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -46,8 +46,9 @@ class _NewCouponState extends State<NewCoupon> {
     if (_image == null ||
         _descriptionController.text.isEmpty ||
         _selectedPercentage == null ||
-        _selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('All fields are required')));
+        _selectedDate == null ||
+        _beaconIdController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All fields are required')));
       return;
     }
 
@@ -56,11 +57,11 @@ class _NewCouponState extends State<NewCoupon> {
       Uri.parse(couponURL),
     );
 
-
     request.files.add(await http.MultipartFile.fromPath('photo', _image!.path));
     request.fields['description'] = _descriptionController.text;
     request.fields['percentage'] = _selectedPercentage!;
     request.fields['expiry_date'] = _selectedDate!.toIso8601String();
+    request.fields['beacon_id'] = _beaconIdController.text;
 
     final response = await request.send();
 
@@ -69,22 +70,21 @@ class _NewCouponState extends State<NewCoupon> {
         context,
         MaterialPageRoute(builder: (context) => CouponListPage()),
       );
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Coupon published successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coupon published successfully')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to publish coupon')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to publish coupon')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true, // Ensures keyboard does not block input fields
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        //title: Text('New Coupon'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +92,7 @@ class _NewCouponState extends State<NewCoupon> {
             const SizedBox(height: 20),
             Center(
               child: Image.asset(
-                'lib/assets/logo.png', // Replace with the correct path to your logo.png
+                'lib/assets/logo.png',
                 height: 80,
               ),
             ),
@@ -113,7 +113,7 @@ class _NewCouponState extends State<NewCoupon> {
                       : null,
                 ),
                 child: _image == null
-                    ? Center(
+                    ? const Center(
                   child: Text(
                     'Add Photo',
                     style: TextStyle(color: Colors.white),
@@ -122,12 +122,12 @@ class _NewCouponState extends State<NewCoupon> {
                     : null,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
-              decoration: InputDecoration(labelText: 'Description'),
+              decoration: _inputDecoration('Description'),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             GestureDetector(
               onTap: () async {
                 showModalBottomSheet(
@@ -141,63 +141,52 @@ class _NewCouponState extends State<NewCoupon> {
                           _selectedPercentage = '${(index + 1) * 5}';
                         });
                       },
-                      children: List<Widget>.generate(20, (int index) {
-                        return Center(
-                          child: Text('${(index + 1) * 5}%'),
-                        );
-                      }),
+                      children: List.generate(20, (index) => Center(child: Text('${(index + 1) * 5}%'))),
                     );
                   },
                 );
               },
               child: Container(
                 height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                decoration: _boxDecoration(),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     _selectedPercentage != null ? '$_selectedPercentage% off' : 'Select Percentage',
-                    style: TextStyle(color: Colors.black54),
+                    style: const TextStyle(color: Colors.black54),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             GestureDetector(
               onTap: _selectExpiryDate,
               child: Container(
                 height: 50,
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                decoration: _boxDecoration(),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     _selectedDate != null
                         ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
                         : 'Select Expiry Date',
-                    style: TextStyle(color: Colors.black54),
+                    style: const TextStyle(color: Colors.black54),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
+            TextField(
+              controller: _beaconIdController,
+              decoration: _inputDecoration('Beacon ID'),
+            ),
+            const SizedBox(height: 16),
             Center(
               child: ElevatedButton(
                 onPressed: _publishCoupon,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  minimumSize: const Size(double.infinity, 50), // Make the button wider and taller
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+                style: _buttonStyle(),
                 child: const Text(
                   'Publish',
                   style: TextStyle(color: Colors.white),
@@ -206,6 +195,35 @@ class _NewCouponState extends State<NewCoupon> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Common styling for input fields
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  // Common styling for box elements (like Percentage & Expiry Date selection)
+  BoxDecoration _boxDecoration() {
+    return BoxDecoration(
+      border: Border.all(color: Colors.grey),
+      borderRadius: BorderRadius.circular(8.0),
+    );
+  }
+
+  // Common button style
+  ButtonStyle _buttonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.blue,
+      minimumSize: const Size(double.infinity, 50),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
       ),
     );
   }

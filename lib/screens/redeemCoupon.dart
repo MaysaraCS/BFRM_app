@@ -40,7 +40,7 @@ class Redeemcoupon extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
                 child: Image.network(
-                  'http://192.168.8.112:8080/storage/${coupon['photo']}',
+                  'http://192.168.0.197:8080/storage/${coupon['photo']}',
                   height: 180, // Increased height for better display
                   width: double.infinity,
                   fit: BoxFit.cover,

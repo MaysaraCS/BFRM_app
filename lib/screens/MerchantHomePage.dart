@@ -43,7 +43,7 @@ class _MerchanthomepageState extends State<Merchanthomepage> {
   }
 
   Future<void> _deleteDiscount(int id) async {
-    final response = await http.delete(Uri.parse('http://192.168.8.112:8080/api/discounts/$id'));
+    final response = await http.delete(Uri.parse('http://192.168.0.197:8080/api/discounts/$id'));
     if (response.statusCode == 200) {
       setState(() {
         _discounts.removeWhere((discount) => discount['id'] == id);
