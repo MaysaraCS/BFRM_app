@@ -6,12 +6,8 @@ import '../constant.dart';
 import '../model/Login.dart';
 import 'package:bfrm_app_flutter/screens/SuccessMerchantPage.dart';
 
-
-
 class OTPVerificationPage extends StatefulWidget {
   final String email; // Email passed from the previous page
-  //final Login usernameData;
-
 
   const OTPVerificationPage({Key? key, required this.email}) : super(key: key);
 
@@ -38,53 +34,85 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
     });
 
     try {
+      print('Sending OTP verification request...');
+      print('Email: ${widget.email}');
+      print('OTP: $otp');
+      print('URL: $OTPURL');
+
       final response = await http.post(
         Uri.parse(OTPURL),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': widget.email, 'otp': otp}),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'email': widget.email.toLowerCase().trim(),
+          'otp': otp
+        }),
       );
+
+      print('Response Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
 
       setState(() {
         isLoading = false;
       });
-      final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && responseData['status'] == true) {
-        final data = jsonDecode(response.body);
-        String userRole = responseData['role'];
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
 
-        if (data['status'] == true && userRole == 'customer') {
+        if (responseData['status'] == true) {
+          // Get user role from the response data
+          String userRole = responseData['data']['role'];
+
+          print('User Role: $userRole');
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('OTP verified successfully!')),
           );
+
           Login loginData = Login();
           loginData.email = widget.email;
 
-          // Navigate to the SuccessPage
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => SuccessPage(usernameData: loginData,)),
-          );
-        }
-        else if (data['status'] == true && userRole == 'merchant') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OTP verified successfully!')),
-          );
-          Login loginData = Login();
-          loginData.email = widget.email;
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Successmerchantpage(usernameData: loginData,)),
-          );
+          if (userRole == 'customer') {
+            // Navigate to the SuccessPage for customer
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => SuccessPage(usernameData: loginData)),
+            );
+          } else if (userRole == 'merchant') {
+            // Navigate to the SuccessMerchantPage for merchant
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => Successmerchantpage(usernameData: loginData)),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unknown user role.')),
+            );
+          }
         } else {
+          // Show the error message from the server
+          String errorMessage = responseData['message'] ?? 'Invalid OTP';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Invalid OTP.')),
+            SnackBar(content: Text(errorMessage)),
           );
         }
       } else {
+        // Handle different status codes
+        String errorMessage = 'Error verifying OTP. Status: ${response.statusCode}';
+
+        if (response.body.isNotEmpty) {
+          try {
+            final errorData = jsonDecode(response.body);
+            errorMessage = errorData['message'] ?? errorMessage;
+          } catch (e) {
+            print('Error parsing error response: $e');
+          }
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error verifying OTP. Please try again.')),
+          SnackBar(content: Text(errorMessage)),
         );
       }
     } catch (e) {
@@ -92,8 +120,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
         isLoading = false;
       });
 
+      print('Exception occurred: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred. Please try again.')),
+        SnackBar(content: Text('Network error: ${e.toString()}')),
       );
     }
   }
@@ -142,38 +171,72 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
             const SizedBox(height: 10),
             // Subtitle
             const Text(
-              'Enter the 4-digit verification code sent to your email',
+              'Enter the 6-digit verification code sent to your email',
               style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
+            // Debug info (remove in production)
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(5),
+              ),
+              // child: Column(
+              //   children: [
+              //     Text('Email: ${widget.email}', style: TextStyle(fontSize: 12)),
+              //     Text('URL: $OTPURL', style: TextStyle(fontSize: 12)),
+              //   ],
+              // ),
+            ),
+            const SizedBox(height: 20),
             // OTP TextField
             TextField(
               controller: otpController,
               keyboardType: TextInputType.number,
+              maxLength: 6, // Set max length to 6 digits
               decoration: InputDecoration(
-                labelText: 'OTP',
+                labelText: 'Enter 6-digit OTP',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
+                counterText: '', // Hide the counter text
               ),
             ),
             const SizedBox(height: 20),
             // Verify OTP Button
-            ElevatedButton(
-              onPressed: isLoading ? null : verifyOtp,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : verifyOtp,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                  'Verify OTP',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                'Verify OTP',
-                style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            // Resend OTP option (optional)
+            TextButton(
+              onPressed: () {
+                // Add resend OTP functionality here if needed
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Resend OTP functionality not implemented yet')),
+                );
+              },
+              child: const Text(
+                'Didn\'t receive OTP? Resend',
+                style: TextStyle(color: Colors.blue),
               ),
             ),
           ],
