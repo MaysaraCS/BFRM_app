@@ -28,6 +28,9 @@ const userURL = baseURL + '/user';
 const customerDetailURL = baseURL + '/customerDetailURL';
 
 const merchantURL = baseURL + '/merchant';
+const ProfileURL = baseURL + '/profile';
+
+
 
 // ----- Errors -----
 const serverError = 'Server error';

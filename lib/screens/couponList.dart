@@ -104,7 +104,7 @@ class _CouponListPageState extends State<CouponListPage> {
     Report(),
     Camera(),
     CouponListPage(),
-    Mercchantprofile(),
+    MerchantProfile(),
   ];
 
   @override

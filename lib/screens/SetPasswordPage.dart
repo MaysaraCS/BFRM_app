@@ -83,6 +83,7 @@ class _SetPasswordPageState extends State<SetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevent widget resizing
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,

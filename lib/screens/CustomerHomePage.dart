@@ -5,10 +5,11 @@ import 'package:bfrm_app_flutter/screens/customerProfile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // Add this import to handle JSON decoding
-import 'dart:io';
+import 'dart:convert'; // For JSON decoding
+import 'package:get/get.dart';
 
 import '../constant.dart';
+import '../controllers/ble_controller.dart';  // Import BleController
 
 class Customerhomepage extends StatefulWidget {
   const Customerhomepage({super.key});
@@ -29,6 +30,9 @@ class _CustomerhomepageState extends State<Customerhomepage> {
 
   String? _token;
   List<dynamic> _discounts = [];
+
+  // Get the BleController instance
+  final BleController bleController = Get.find();
 
   @override
   void initState() {
@@ -58,7 +62,6 @@ class _CustomerhomepageState extends State<Customerhomepage> {
   }
 
   Future<void> _addToFavorites(int discountId) async {
-    // Ensure the token is loaded
     if (_token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Token is missing, please log in again')),
@@ -66,13 +69,12 @@ class _CustomerhomepageState extends State<Customerhomepage> {
       return;
     }
 
-    // Send the request with the token in headers
     final response = await http.post(
       Uri.parse('$favoriteURL'),
       body: json.encode({'discount_id': discountId}),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $_token', // Pass the token in the Authorization header
+        'Authorization': 'Bearer $_token',
       },
     );
 
@@ -92,7 +94,7 @@ class _CustomerhomepageState extends State<Customerhomepage> {
     }
   }
 
-  _shareDiscount(String photo, String description) {
+  void _shareDiscount(String photo, String description) {
     Share.share('Check out this discount: $description\nPhoto: $photo');
   }
 
@@ -103,45 +105,78 @@ class _CustomerhomepageState extends State<Customerhomepage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
       ),
-      body: _discounts.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-
-        itemCount: _discounts.length,
-        itemBuilder: (context, index) {
-          final discount = _discounts[index];
-          return Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Image.network(discount['photo']),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    discount['description'],
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+      body: Obx(() {
+        return Column(
+          children: [
+            // Notification Banner
+            if (bleController.showNotificationBanner.value)
+              GestureDetector(
+                onTap: () {
+                  bleController.resetNotificationBanner();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CustomerCouponPage()),
+                  );
+                },
+                child: Container(
+                  color: Colors.yellow[100],
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text(
+                        'New coupon available! Tap to view.',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Icon(Icons.chevron_right),
+                    ],
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.favorite, color: Colors.red),
-                      onPressed: () => _addToFavorites(discount['id']),
+              ),
+            // Discounts List
+            Expanded(
+              child: _discounts.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                itemCount: _discounts.length,
+                itemBuilder: (context, index) {
+                  final discount = _discounts[index];
+                  return Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Image.network(discount['photo']),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            discount['description'],
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.favorite, color: Colors.red),
+                              onPressed: () => _addToFavorites(discount['id']),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.share, color: Colors.blue),
+                              onPressed: () =>
+                                  _shareDiscount(discount['photo'], discount['description']),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.share, color: Colors.blue),
-                      onPressed: () =>
-                          _shareDiscount(discount['photo'], discount['description']),
-                    ),
-                  ],
-                ),
-              ],
+                  );
+                },
+              ),
             ),
-          );
-        },
-      ),
+          ],
+        );
+      }),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: Colors.black,
@@ -174,7 +209,6 @@ class _CustomerhomepageState extends State<Customerhomepage> {
           ),
         ],
       ),
-      // Add the logo here
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -182,7 +216,7 @@ class _CustomerhomepageState extends State<Customerhomepage> {
             const SizedBox(height: 20),
             Center(
               child: Image.asset(
-                'lib/assets/logo.png', // Replace with the correct path to your logo.png
+                'lib/assets/logo.png',
                 height: 80,
               ),
             ),

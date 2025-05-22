@@ -86,7 +86,7 @@ class _MerchanthomepageState extends State<Merchanthomepage> {
     Report(),
     Camera(),
     CouponListPage(),
-    Mercchantprofile(),
+    MerchantProfile(),
   ];
 
   @override

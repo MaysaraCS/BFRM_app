@@ -75,6 +75,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevent widget resizing
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
