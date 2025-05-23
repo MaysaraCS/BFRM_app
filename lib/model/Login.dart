@@ -4,22 +4,23 @@ class Login {
   // User authentication data
   String? username;
   String? email;
-  String? authToken; // Add authentication token
-  String? userId; // Add user ID
-  String? userRole; // Add user role (merchant/customer)
+  String? authToken;
+  String? userId;
+  String? userRole;
 
   // Customer preferences
-  List<String> cuisneType = [];
+  List<String> cuisineType = [];
   List<String> couponType = [];
 
   // Business registration data (for merchants)
-  String? restaurantname;
-  List<String> PrimGoal = [];
+  String? restaurantName;
+  List<String> primGoal = [];
   String? restaurantLocation;
-  String? other_goal;
+  String? otherGoal;
   String? restaurantLogo;
   String? restaurantPhoto;
   String? restaurantContact;
+  final bool? isVerified;
 
   // Constructor
   Login({
@@ -28,14 +29,46 @@ class Login {
     this.authToken,
     this.userId,
     this.userRole,
+    this.cuisineType = const [],
+    this.couponType = const [],
+    this.restaurantName,
+    this.primGoal = const [],
+    this.restaurantLocation,
+    this.otherGoal,
+    this.restaurantLogo,
+    this.restaurantPhoto,
+    this.restaurantContact,
+    this.isVerified,
   });
+
+  factory Login.fromJson(Map<String, dynamic> json) {
+    return Login(
+      email: json['email'],
+      userRole: json['role'],
+      username: json['username'],
+      // ✅ FIX: Handle different possible userId field names
+      userId: json['id']?.toString() ??
+          json['user_id']?.toString() ??
+          json['_id']?.toString(),
+      restaurantName: json['restaurant_name'],
+      restaurantContact: json['phone_number'],
+      restaurantLocation: json['location'],
+      restaurantLogo: json['logo'],
+      restaurantPhoto: json['photo'],
+      otherGoal: json['other_goal'],
+      cuisineType: List<String>.from(json['cuisine_type'] ?? []),
+      couponType: List<String>.from(json['coupon_type'] ?? []),
+      primGoal: List<String>.from(json['primary_goal'] ?? []),
+      isVerified: json['is_verified'],
+    );
+  }
 
   // Method to clear business registration data after successful submission
   void clearBusinessData() {
-    restaurantname = null;
-    PrimGoal.clear();
+    restaurantName = null;
+    primGoal.clear();
     restaurantLocation = null;
-    other_goal = null;
+    otherGoal = null;
     restaurantLogo = null;
     restaurantPhoto = null;
     restaurantContact = null;
@@ -48,7 +81,7 @@ class Login {
     authToken = null;
     userId = null;
     userRole = null;
-    cuisneType.clear();
+    cuisineType.clear();
     couponType.clear();
     clearBusinessData();
   }
@@ -70,20 +103,20 @@ class Login {
 
   // Method to validate business registration data
   bool isBusinessDataComplete() {
-    return restaurantname != null &&
-        restaurantname!.isNotEmpty &&
+    return restaurantName != null &&
+        restaurantName!.isNotEmpty &&
         restaurantLocation != null &&
         restaurantLocation!.isNotEmpty &&
         restaurantLogo != null &&
         restaurantLogo!.isNotEmpty &&
         restaurantPhoto != null &&
         restaurantPhoto!.isNotEmpty &&
-        PrimGoal.isNotEmpty;
+        primGoal.isNotEmpty;
   }
 
   // Method to get primary goals as string (for API submission)
   String getPrimaryGoalsAsString() {
-    return PrimGoal.join(', ');
+    return primGoal.join(', ');
   }
 
   // Method to set user data from login response
@@ -105,9 +138,9 @@ class Login {
   Map<String, dynamic> toBusinessRegistrationJson() {
     return {
       'email': email,
-      'restaurant_name': restaurantname,
+      'restaurant_name': restaurantName,
       'primary_goal': getPrimaryGoalsAsString(),
-      'other_goal': other_goal ?? '',
+      'other_goal': otherGoal ?? '',
       'location': restaurantLocation,
       'logo': restaurantLogo,
       'photo': restaurantPhoto,
@@ -131,6 +164,6 @@ class Login {
 
   @override
   String toString() {
-    return 'Login{email: $email, role: $userRole, isAuthenticated: ${isAuthenticated()}}';
+    return 'Login{email: $email, userId: $userId, role: $userRole, isAuthenticated: ${isAuthenticated()}}';
   }
 }

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 import '../constant.dart';
+import '../model/Login.dart';
 import 'MerchantHomePage.dart';
 import 'report.dart';
 import 'camera.dart';
@@ -59,20 +60,22 @@ class _MerchantProfileState extends State<MerchantProfile> {
     );
 
     if (res.statusCode == 200) {
-      final data = json.decode(res.body);
-      // Only merchants reach this page; we still null‑check values
+      final responseData = json.decode(res.body);
+      Login usernameData = Login.fromJson(responseData);
+
       setState(() {
-        _restaurantCtrl.text = data['restaurant_name'] ?? '';
-        _emailCtrl.text      = data['email'] ?? '';
-        _phoneCtrl.text      = data['phone_number'] ?? '';
-        _locationCtrl.text   = data['location'] ?? '';
-        _logoUrl             = data['logo'];
-        _loading             = false;
+        _restaurantCtrl.text = usernameData.restaurantName ?? '';
+        _emailCtrl.text = usernameData.email ?? '';
+        _phoneCtrl.text = usernameData.restaurantContact ?? '';
+        _locationCtrl.text = usernameData.restaurantLocation ?? '';
+        _logoUrl = usernameData.restaurantLogo;
+        _loading = false;
       });
     } else {
       _showSnack('Failed to load profile');
       setState(() => _loading = false);
     }
+
   }
 
   /* --------------------------------------------------------------------------
@@ -233,7 +236,7 @@ class _MerchantProfileState extends State<MerchantProfile> {
         onTap: (index) {
           if (index == _currentIndex) return;
           final pages = [
-            const Merchanthomepage(),
+            //const Merchanthomepage(usernameData: usernameData),
             const Report(),
             const Camera(),
              CouponListPage(),

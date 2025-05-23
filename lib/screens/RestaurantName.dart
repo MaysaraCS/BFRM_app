@@ -20,7 +20,7 @@ class _RestaurantnameState extends State<Restaurantname> {
 
   Future<void> _submitRestaurantname() async {
     final String restaurantname = _RestaurantnameController.text.trim();
-    widget.usernameData.restaurantname = restaurantname;
+    widget.usernameData.restaurantName = restaurantname;
 
     Navigator.push(
       context,

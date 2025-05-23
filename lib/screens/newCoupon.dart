@@ -3,11 +3,18 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
-
+import 'package:get/get.dart';
+import 'package:bfrm_app_flutter/controllers/ble_controller.dart';
+import 'dart:convert';
+import '../model/Login.dart';
 import 'couponList.dart';
 import '../constant.dart';
 
 class NewCoupon extends StatefulWidget {
+  final Login usernameData; // Add Login model to get merchant ID
+
+  const NewCoupon({Key? key, required this.usernameData}) : super(key: key);
+
   @override
   _NewCouponState createState() => _NewCouponState();
 }
@@ -16,8 +23,20 @@ class _NewCouponState extends State<NewCoupon> {
   File? _image;
   String? _selectedPercentage;
   DateTime? _selectedDate;
+  String? _selectedBeaconId;
   final _descriptionController = TextEditingController();
-  final _beaconIdController = TextEditingController(); // New controller for Beacon ID
+  final BleController _bleController = Get.put(BleController());
+  bool _isScanning = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeBle();
+  }
+
+  Future<void> _initializeBle() async {
+    await _bleController.initNotifications();
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -42,47 +61,336 @@ class _NewCouponState extends State<NewCoupon> {
     }
   }
 
+  Future<void> _startBeaconScan() async {
+    setState(() {
+      _isScanning = true;
+      _selectedBeaconId = null;
+    });
+
+    // Clear previous scan results
+    _bleController.scannedBeaconIds.clear();
+
+    // Start scanning
+    await _bleController.startScan();
+
+    // Show bottom sheet with scanning results
+    _showBeaconSelectionBottomSheet();
+  }
+
+  void _showBeaconSelectionBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Beacon Device',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _isScanning = false;
+                      });
+                      Navigator.pop(context);
+                    },
+                    icon: Icon(Icons.close),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              Obx(() => _bleController.isScanning.value
+                  ? Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Text('Scanning for beacon devices...'),
+                ],
+              )
+                  : Row(
+                children: [
+                  Icon(Icons.bluetooth_searching, color: Colors.green),
+                  SizedBox(width: 10),
+                  Text('Scan completed'),
+                ],
+              )),
+              SizedBox(height: 20),
+              Expanded(
+                child: Obx(() {
+                  final beaconIds = _bleController.scannedBeaconIds;
+
+                  if (beaconIds.isEmpty && !_bleController.isScanning.value) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.bluetooth_disabled,
+                            size: 60,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No beacon devices found.',
+                            style: TextStyle(fontSize: 16, color: Colors.black54),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await _bleController.startScan();
+                            },
+                            icon: Icon(Icons.refresh),
+                            label: Text('Scan Again'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: beaconIds.length,
+                    itemBuilder: (context, index) {
+                      final beaconId = beaconIds[index];
+                      return Card(
+                        margin: EdgeInsets.symmetric(vertical: 4),
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.bluetooth,
+                            color: Colors.blue,
+                          ),
+                          title: Text(
+                            'Beacon Device',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            beaconId,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: Icon(Icons.arrow_forward_ios),
+                          onTap: () {
+                            setState(() {
+                              _selectedBeaconId = beaconId;
+                              _isScanning = false;
+                            });
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Beacon device selected successfully'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    ).then((_) {
+      setState(() {
+        _isScanning = false;
+      });
+    });
+  }
+
   Future<void> _publishCoupon() async {
-    if (_image == null ||
-        _descriptionController.text.isEmpty ||
-        _selectedPercentage == null ||
-        _selectedDate == null ||
-        _beaconIdController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All fields are required')));
+    // More comprehensive validation
+    if (_image == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an image')),
+      );
       return;
     }
 
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse(couponURL),
+    if (_descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a description')),
+      );
+      return;
+    }
+
+    if (_selectedPercentage == null || _selectedPercentage!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a percentage')),
+      );
+      return;
+    }
+
+    if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an expiry date')),
+      );
+      return;
+    }
+
+    if (_selectedBeaconId == null || _selectedBeaconId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a beacon device')),
+      );
+      return;
+    }
+
+    // Check if userId exists
+    if (widget.usernameData.userId == null || widget.usernameData.userId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User ID not found. Please login again.')),
+      );
+      return;
+    }
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
     );
 
-    request.files.add(await http.MultipartFile.fromPath('photo', _image!.path));
-    request.fields['description'] = _descriptionController.text;
-    request.fields['percentage'] = _selectedPercentage!;
-    request.fields['expiry_date'] = _selectedDate!.toIso8601String();
-    request.fields['beacon_id'] = _beaconIdController.text;
-
-    final response = await request.send();
-
-    if (response.statusCode == 201) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => CouponListPage()),
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(couponURL),
       );
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coupon published successfully')));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to publish coupon')));
+
+      // Safely add fields with null checks
+      request.fields['merchant_id'] = widget.usernameData.userId!;
+      request.fields['description'] = _descriptionController.text.trim();
+      request.fields['percentage'] = _selectedPercentage!;
+      request.fields['expiry_date'] = _selectedDate!.toIso8601String();
+      request.fields['beacon_id'] = _selectedBeaconId!;
+
+      // Add image file
+      try {
+        request.files.add(await http.MultipartFile.fromPath('photo', _image!.path));
+      } catch (e) {
+        Navigator.pop(context); // Hide loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error reading image file: ${e.toString()}')),
+        );
+        return;
+      }
+
+      // Add authentication headers if available
+      if (widget.usernameData.isAuthenticated()) {
+        try {
+          request.headers.addAll(widget.usernameData.getAuthHeaders());
+        } catch (e) {
+          print('Warning: Could not add auth headers: $e');
+          // Continue without auth headers
+        }
+      }
+
+      final response = await request.send();
+      final responseString = await response.stream.bytesToString();
+
+      // Hide loading indicator
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      if (response.statusCode == 201) {
+        if (Navigator.canPop(context)) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => CouponListPage()),
+          );
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Coupon published successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        print('Server response: $responseString'); // For debugging
+        String errorMessage = 'Failed to publish coupon';
+
+        // Try to parse error message from response
+        try {
+          final responseData = json.decode(responseString);
+          if (responseData['message'] != null) {
+            errorMessage = responseData['message'];
+          }
+        } catch (e) {
+          // Use default error message
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Hide loading indicator
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      print('Error publishing coupon: $e'); // For debugging
+
+      String errorMessage = 'Network error occurred';
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'No internet connection';
+      } else if (e.toString().contains('TimeoutException')) {
+        errorMessage = 'Request timeout. Please try again.';
+      } else if (e.toString().contains('FormatException')) {
+        errorMessage = 'Invalid server response';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // Ensures keyboard does not block input fields
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        title: Text('New Coupon'),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -126,6 +434,7 @@ class _NewCouponState extends State<NewCoupon> {
             TextField(
               controller: _descriptionController,
               decoration: _inputDecoration('Description'),
+              maxLines: 3,
             ),
             const SizedBox(height: 16),
             GestureDetector(
@@ -178,17 +487,89 @@ class _NewCouponState extends State<NewCoupon> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _beaconIdController,
-              decoration: _inputDecoration('Beacon ID'),
+            // Beacon Selection Section
+            Container(
+              width: double.infinity,
+              decoration: _boxDecoration(),
+              child: Column(
+                children: [
+                  Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedBeaconId != null
+                              ? 'Beacon: ${_selectedBeaconId!.substring(0, 8)}...'
+                              : 'Select Beacon Device',
+                          style: TextStyle(
+                            color: _selectedBeaconId != null ? Colors.black : Colors.black54,
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_selectedBeaconId != null)
+                              Icon(Icons.check_circle, color: Colors.green, size: 20),
+                            SizedBox(width: 8),
+                            Icon(Icons.bluetooth_searching, color: Colors.blue),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_selectedBeaconId != null)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(8),
+                          bottomRight: Radius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        _selectedBeaconId!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: _startBeaconScan,
+                icon: _isScanning
+                    ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                    : Icon(Icons.bluetooth_searching),
+                label: Text(_isScanning ? 'Scanning...' : 'Scan for Beacons'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             Center(
               child: ElevatedButton(
                 onPressed: _publishCoupon,
                 style: _buttonStyle(),
                 child: const Text(
-                  'Publish',
+                  'Publish Coupon',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -209,7 +590,7 @@ class _NewCouponState extends State<NewCoupon> {
     );
   }
 
-  // Common styling for box elements (like Percentage & Expiry Date selection)
+  // Common styling for box elements
   BoxDecoration _boxDecoration() {
     return BoxDecoration(
       border: Border.all(color: Colors.grey),
@@ -226,5 +607,11 @@ class _NewCouponState extends State<NewCoupon> {
         borderRadius: BorderRadius.circular(8),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 }

@@ -56,7 +56,7 @@ class _DiningPreferencesPageState extends State<DiningPreferencesPage> {
     // Prepare data to send to the API
     final Map<String, dynamic> requestData = {
       "username": widget.usernameData.username,
-      "cuisine_preferences": widget.usernameData.cuisneType,
+      "cuisine_preferences": widget.usernameData.cuisineType,
       "prefers_coupons": widget.usernameData.couponType,
       "dining_preferences": selectedPreferences,
       "email": widget.usernameData.email,

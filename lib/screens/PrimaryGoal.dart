@@ -41,7 +41,7 @@ class _PrimarygoalState extends State<Primarygoal> {
       );
       return;
     }
-    widget.usernameData.PrimGoal = selectedPrimGoal;
+    widget.usernameData.primGoal = selectedPrimGoal;
     Navigator.push(
       context,
       MaterialPageRoute(

@@ -75,7 +75,7 @@ class _CuisinePreferencesPageState extends State<CuisinePreferencesPage> {
     //   );
     // }
 
-    widget.usernameData.cuisneType = selectedCuisines;
+    widget.usernameData.cuisineType = selectedCuisines;
     Navigator.push(
               context,
               MaterialPageRoute(

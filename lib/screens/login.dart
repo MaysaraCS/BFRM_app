@@ -1,3 +1,4 @@
+import 'package:bfrm_app_flutter/model/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -7,8 +8,7 @@ import 'package:bfrm_app_flutter/screens/CustomerHomePage.dart';
 import 'package:bfrm_app_flutter/screens/Password_Recovery.dart';
 import '../constant.dart';
 import 'package:bfrm_app_flutter/screens/MerchantHomePage.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Add this
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -46,11 +46,25 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200 && responseData['status'] == true) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', responseData['token']);
+
         // Show success message
         _showMessage(responseData['message']);
 
-        // Get the user's role
-        String userRole = responseData['role'];
+        // Get the user's role from `data`
+        String userRole = responseData['data']['role'];
+
+        // Create Login object from JSON response
+        Login usernameData = Login.fromJson(responseData['data']);
+
+        // ✅ FIX: Set the userId and authToken explicitly
+        usernameData.userId = responseData['data']['id']?.toString() ??
+            responseData['data']['user_id']?.toString() ??
+            responseData['data']['_id']?.toString();
+        usernameData.authToken = responseData['token'];
+
+        // Debug print to check if userId is set
+        print('User ID set to: ${usernameData.userId}');
+        print('Auth Token set to: ${usernameData.authToken}');
 
         // Navigate to the appropriate home page
         if (userRole == 'customer') {
@@ -64,19 +78,20 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) =>  Merchanthomepage(),
+              builder: (context) => Merchanthomepage(usernameData: usernameData),
             ),
           );
         }
-      } else {
+      }
+      else {
         // Show failure message
         _showMessage(responseData['message'] ?? "Login failed");
       }
     } catch (error) {
+      print('Login error: $error'); // Add debug print
       _showMessage("An error occurred. Please try again later.");
     }
   }
-
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

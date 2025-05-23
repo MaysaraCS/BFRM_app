@@ -78,7 +78,7 @@ class _ContactnumberState extends State<Contactnumber> {
       return;
     }
 
-    if (widget.usernameData.restaurantname == null || widget.usernameData.restaurantname!.isEmpty) {
+    if (widget.usernameData.restaurantName == null || widget.usernameData.restaurantName!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Restaurant name is required')),
       );
@@ -92,7 +92,7 @@ class _ContactnumberState extends State<Contactnumber> {
       return;
     }
 
-    if (widget.usernameData.PrimGoal.isEmpty) {
+    if (widget.usernameData.primGoal.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Primary goals are required')),
       );
@@ -118,9 +118,9 @@ class _ContactnumberState extends State<Contactnumber> {
       // Add text fields (ensure all values are non-null strings)
       request.fields.addAll({
         "email": widget.usernameData.email ?? "",
-        "restaurant_name": widget.usernameData.restaurantname ?? "",
-        "primary_goal": widget.usernameData.PrimGoal.join(', '), // Convert list to string
-        "other_goal": widget.usernameData.other_goal ?? "",
+        "restaurant_name": widget.usernameData.restaurantName ?? "",
+        "primary_goal": widget.usernameData.primGoal.join(', '), // Convert list to string
+        "other_goal": widget.usernameData.otherGoal ?? "",
         "location": widget.usernameData.restaurantLocation ?? "",
         "phone_number": formattedContact,
       });
@@ -249,8 +249,8 @@ class _ContactnumberState extends State<Contactnumber> {
           // Navigate to Merchant Homepage
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => Merchanthomepage()),
-                (route) => false,
+            MaterialPageRoute(builder: (context) => Merchanthomepage(usernameData: widget.usernameData)),
+            (route) => false,
           );
         } else {
           String errorMessage = responseData['message'] ?? 'Registration failed';
@@ -383,7 +383,7 @@ class _ContactnumberState extends State<Contactnumber> {
             const SizedBox(height: 30),
 
             // Summary of collected data
-            if (widget.usernameData.restaurantname != null) ...[
+            if (widget.usernameData.restaurantName != null) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -400,7 +400,7 @@ class _ContactnumberState extends State<Contactnumber> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    Text('Restaurant: ${widget.usernameData.restaurantname}'),
+                    Text('Restaurant: ${widget.usernameData.restaurantName}'),
                     Text('Location: ${widget.usernameData.restaurantLocation ?? "Not set"}'),
                     Text('Email: ${widget.usernameData.email}'),
                   ],
