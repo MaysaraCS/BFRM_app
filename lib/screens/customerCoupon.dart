@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bfrm_app_flutter/screens/redeemCoupon.dart';
 import 'package:bfrm_app_flutter/controllers/ble_controller.dart';
 
@@ -15,6 +16,7 @@ class CustomerCouponPage extends StatefulWidget {
 class _CustomerCouponPageState extends State<CustomerCouponPage> with WidgetsBindingObserver {
   List<dynamic> _coupons = [];
   String? _selectedPercentageFilter;
+  String? _authToken;
   final BleController _bleController = Get.put(BleController());
   bool _isLoading = true;
 
@@ -22,7 +24,16 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> with WidgetsBin
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadAuthToken();
     _initializeAndStartScan();
+  }
+
+  Future<void> _loadAuthToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _authToken = prefs.getString('token');
+    });
+    print('Auth token loaded: ${_authToken != null ? "Present" : "Missing"}');
   }
 
   Future<void> _initializeAndStartScan() async {
@@ -34,7 +45,6 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> with WidgetsBin
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Restart scanning when app comes to foreground
       _bleController.startScan();
       _fetchCoupons();
     }
@@ -46,33 +56,108 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> with WidgetsBin
     });
 
     try {
-      final response = await http.get(Uri.parse(couponURL));
-      if (response.statusCode == 200) {
-        setState(() {
-          _coupons = json.decode(response.body);
-          _isLoading = false;
-        });
+      // Make sure your constant.dart has the correct URL
+      // couponURL should be something like: 'http://192.168.0.197:8080/api/coupons'
+      final browseUrl = '$couponURL/browse';
+      print('Fetching from: $browseUrl');
+
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      // Add auth token if available
+      if (_authToken != null && _authToken!.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $_authToken';
+        print('Added auth header with token: ${_authToken!.substring(0, 10)}...');
       } else {
-        print('Failed to load coupons');
+        print('WARNING: No auth token available');
+      }
+
+      print('Headers: $headers');
+
+      final response = await http.get(
+        Uri.parse(browseUrl),
+        headers: headers,
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response headers: ${response.headers}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        setState(() {
+          // Handle Laravel response format
+          if (responseData is Map && responseData.containsKey('data')) {
+            _coupons = responseData['data'] ?? [];
+          } else if (responseData is List) {
+            _coupons = responseData;
+          } else {
+            _coupons = [];
+          }
+          _isLoading = false;
+        });
+
+        print('Successfully loaded ${_coupons.length} coupons');
+      } else if (response.statusCode == 401) {
+        print('Authentication failed - token may be invalid or expired');
+        // Handle token refresh or redirect to login
         setState(() {
           _isLoading = false;
         });
+
+        // Show error to user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Authentication failed. Please login again.')),
+        );
+      } else if (response.statusCode == 403) {
+        print('Access forbidden - user may not have customer role');
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Access denied. Customer account required.')),
+        );
+      } else {
+        print('Failed to load coupons: ${response.statusCode}');
+        print('Error response: ${response.body}');
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Try to parse error message from response
+        try {
+          final errorData = json.decode(response.body);
+          final errorMessage = errorData['message'] ?? 'Failed to load coupons';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage)),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load coupons: ${response.statusCode}')),
+          );
+        }
       }
     } catch (e) {
-      print('Error fetching coupons: $e');
+      print('Network error fetching coupons: $e');
       setState(() {
         _isLoading = false;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Network error: Please check your connection')),
+      );
     }
   }
 
   List<dynamic> get _filteredCoupons {
-    // First filter by nearby beacons
     final nearbyBeaconCoupons = _coupons.where((coupon) {
       return _bleController.scannedBeaconIds.contains(coupon['beacon_id']);
     }).toList();
 
-    // Then apply percentage filter if selected
     if (_selectedPercentageFilter == null) {
       return nearbyBeaconCoupons;
     } else {
@@ -200,6 +285,15 @@ class _CustomerCouponPageState extends State<CustomerCouponPage> with WidgetsBin
                           : 'No ${_selectedPercentageFilter}% coupons available nearby.',
                       style: TextStyle(fontSize: 16, color: Colors.black54),
                       textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Total coupons: ${_coupons.length}',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    Text(
+                      'Nearby beacons: ${_bleController.scannedBeaconIds.length}',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                     SizedBox(height: 24),
                     ElevatedButton.icon(
