@@ -7,6 +7,7 @@ import 'package:bfrm_app_flutter/screens/beaconOrder.dart';
 import 'package:bfrm_app_flutter/screens/MerchantHomePage.dart';
 import 'package:http/http.dart' as http;
 import 'login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Contactnumber extends StatefulWidget {
   final Login usernameData;
@@ -46,6 +47,103 @@ class _ContactnumberState extends State<Contactnumber> {
     }
 
     return cleanNumber;
+  }
+
+  // Helper method to fetch user ID by email
+  Future<bool> _fetchUserIdByEmail() async {
+    if (widget.usernameData.email == null || widget.usernameData.email!.isEmpty) {
+      print('❌ Cannot fetch user ID: email is null or empty');
+      return false;
+    }
+
+    try {
+      // Extract base URL from existing constants
+      String baseURL = businessRegistrationURL.replaceAll('/api/business-registration', '');
+
+      final response = await http.post(
+        Uri.parse('$baseURL/api/user/profile'), // Adjust this endpoint as needed
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (widget.usernameData.authToken != null)
+            'Authorization': 'Bearer ${widget.usernameData.authToken}',
+        },
+        body: jsonEncode({'email': widget.usernameData.email}),
+      );
+
+      print('User ID fetch response: ${response.statusCode}');
+      print('User ID fetch body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['status'] == true && responseData['data'] != null) {
+          String? fetchedUserId = responseData['data']['id']?.toString() ??
+              responseData['data']['user_id']?.toString() ??
+              responseData['data']['_id']?.toString();
+
+          if (fetchedUserId != null && fetchedUserId.isNotEmpty) {
+            widget.usernameData.userId = fetchedUserId;
+            print('✅ User ID fetched successfully: ${widget.usernameData.userId}');
+            return true;
+          }
+        }
+      }
+
+      print('❌ Failed to fetch user ID: ${response.statusCode}');
+      return false;
+    } catch (e) {
+      print('❌ Error fetching user ID: $e');
+      return false;
+    }
+  }
+
+  // Method to fetch complete user data
+  Future<void> _fetchCompleteUserData() async {
+    try {
+      String baseURL = businessRegistrationURL.replaceAll('/api/business-registration', '');
+
+      final response = await http.get(
+        Uri.parse('$baseURL/api/user/profile'), // or whatever your user profile endpoint is
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (widget.usernameData.authToken != null)
+            'Authorization': 'Bearer ${widget.usernameData.authToken}',
+        },
+      );
+
+      print('Complete user data fetch response: ${response.statusCode}');
+      print('Complete user data body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['status'] == true && responseData['data'] != null) {
+          // Update all user data
+          final userData = responseData['data'];
+
+          widget.usernameData.userId = userData['id']?.toString() ??
+              userData['user_id']?.toString() ??
+              widget.usernameData.userId;
+          widget.usernameData.email = userData['email'] ?? widget.usernameData.email;
+          widget.usernameData.userRole = userData['role'] ?? widget.usernameData.userRole;
+          widget.usernameData.username = userData['username'] ?? userData['name'] ?? widget.usernameData.username;
+
+          print('✅ Complete user data updated successfully');
+          print('✅ User ID: ${widget.usernameData.userId}');
+          print('✅ Email: ${widget.usernameData.email}');
+          print('✅ Role: ${widget.usernameData.userRole}');
+          print('✅ Auth Token: ${widget.usernameData.authToken != null ? "Present" : "Missing"}');
+
+          return;
+        }
+      }
+
+      print('⚠️ Could not fetch complete user data');
+    } catch (e) {
+      print('❌ Error fetching complete user data: $e');
+    }
   }
 
   Future<void> _submitRestaurantContact() async {
@@ -119,7 +217,7 @@ class _ContactnumberState extends State<Contactnumber> {
       request.fields.addAll({
         "email": widget.usernameData.email ?? "",
         "restaurant_name": widget.usernameData.restaurantName ?? "",
-        "primary_goal": widget.usernameData.primGoal.join(', '), // Convert list to string
+        "primary_goal": widget.usernameData.primGoal.join(', '),
         "other_goal": widget.usernameData.otherGoal ?? "",
         "location": widget.usernameData.restaurantLocation ?? "",
         "phone_number": formattedContact,
@@ -129,7 +227,6 @@ class _ContactnumberState extends State<Contactnumber> {
       if (widget.usernameData.restaurantLogo != null &&
           widget.usernameData.restaurantLogo!.isNotEmpty) {
         try {
-          // Assuming restaurantLogo is a file path
           File logoFile = File(widget.usernameData.restaurantLogo!);
           if (await logoFile.exists()) {
             var logoMultipartFile = await http.MultipartFile.fromPath(
@@ -169,7 +266,6 @@ class _ContactnumberState extends State<Contactnumber> {
       if (widget.usernameData.restaurantPhoto != null &&
           widget.usernameData.restaurantPhoto!.isNotEmpty) {
         try {
-          // Assuming restaurantPhoto is a file path
           File photoFile = File(widget.usernameData.restaurantPhoto!);
           if (await photoFile.exists()) {
             var photoMultipartFile = await http.MultipartFile.fromPath(
@@ -226,7 +322,6 @@ class _ContactnumberState extends State<Contactnumber> {
           const SnackBar(content: Text('Authentication required. Please login again.')),
         );
 
-        // Navigate back to login
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => LoginPage()),
@@ -238,7 +333,89 @@ class _ContactnumberState extends State<Contactnumber> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
 
+        // ✅ UPDATED: Check for successful registration
         if (responseData['status'] == true || responseData['message'] == 'Business registered successfully') {
+          // ✅ Extract and set the user ID from API response
+          if (responseData['data'] != null) {
+            String? extractedUserId = responseData['data']['id']?.toString() ??
+                responseData['data']['user_id']?.toString() ??
+                responseData['data']['_id']?.toString() ??
+                responseData['data']['merchant_id']?.toString();
+
+            if (extractedUserId != null && extractedUserId.isNotEmpty) {
+              widget.usernameData.userId = extractedUserId;
+              print('✅ User ID set from business registration: ${widget.usernameData.userId}');
+            }
+
+            // Also update other user data if available
+            if (responseData['data']['email'] != null) {
+              widget.usernameData.email = responseData['data']['email'];
+            }
+            if (responseData['data']['role'] != null) {
+              widget.usernameData.userRole = responseData['data']['role'];
+            }
+          }
+
+          // ✅ ALTERNATIVE FIX: If user ID is still null, try to get it from other response fields
+          if (widget.usernameData.userId == null || widget.usernameData.userId!.isEmpty) {
+            String? backupUserId = responseData['user_id']?.toString() ??
+                responseData['merchant_id']?.toString() ??
+                responseData['id']?.toString();
+
+            if (backupUserId != null && backupUserId.isNotEmpty) {
+              widget.usernameData.userId = backupUserId;
+              print('✅ User ID set from backup fields: ${widget.usernameData.userId}');
+            }
+          }
+
+          // ✅ NEW: Try to fetch user ID if not provided in response
+          if (widget.usernameData.userId == null || widget.usernameData.userId!.isEmpty) {
+            print('🔍 Attempting to fetch user ID by email...');
+            bool userIdFetched = await _fetchUserIdByEmail();
+            if (!userIdFetched) {
+              print('⚠️ Warning: Could not fetch user ID');
+            }
+          }
+
+          // ✅ Fetch complete user data to ensure all fields are properly set
+          await _fetchCompleteUserData();
+
+          // ✅ NEW: Save authentication data to SharedPreferences for persistence
+          try {
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            if (widget.usernameData.authToken != null) {
+              await prefs.setString('token', widget.usernameData.authToken!);
+            }
+            if (widget.usernameData.userId != null) {
+              await prefs.setString('user_id', widget.usernameData.userId!);
+            }
+            if (widget.usernameData.email != null) {
+              await prefs.setString('user_email', widget.usernameData.email!);
+            }
+            if (widget.usernameData.userRole != null) {
+              await prefs.setString('user_role', widget.usernameData.userRole!);
+            }
+            print('✅ User data saved to SharedPreferences');
+          } catch (e) {
+            print('⚠️ Warning: Could not save to SharedPreferences: $e');
+          }
+
+          // ✅ FINAL FALLBACK: If still no user ID
+          if (widget.usernameData.userId == null || widget.usernameData.userId!.isEmpty) {
+            print('⚠️ Warning: User ID still not found, you may need to modify your backend API to return user_id');
+
+            // Show warning but still proceed - the user can try to login again
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Registration successful! Please login again to ensure proper setup.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          } else {
+            // ✅ Success message when user ID is found
+            print('✅ Final User ID confirmed: ${widget.usernameData.userId}');
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Restaurant registered successfully!')),
           );
@@ -246,11 +423,11 @@ class _ContactnumberState extends State<Contactnumber> {
           // Clear the form data after successful registration
           widget.usernameData.clearBusinessData();
 
-          // Navigate to Merchant Homepage
+          // Navigate to Merchant Homepage with the updated usernameData
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => Merchanthomepage(usernameData: widget.usernameData)),
-            (route) => false,
+                (route) => false,
           );
         } else {
           String errorMessage = responseData['message'] ?? 'Registration failed';

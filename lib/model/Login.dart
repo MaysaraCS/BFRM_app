@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Login {
   // User authentication data
@@ -40,6 +43,46 @@ class Login {
     this.restaurantContact,
     this.isVerified,
   });
+
+  // Add this method to fetch user ID by email after registration
+  Future<bool> fetchUserIdByEmail(String baseURL) async {
+    if (email == null || email!.isEmpty) {
+      print('❌ Cannot fetch user ID: email is null or empty');
+      return false;
+    }
+
+    try {
+      // Create a request to get user info by email
+      final response = await http.post(
+        Uri.parse('$baseURL/api/user/by-email'), // You'll need this endpoint
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (authToken != null) 'Authorization': 'Bearer $authToken',
+        },
+        body: jsonEncode({'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['status'] == true && responseData['data'] != null) {
+          userId = responseData['data']['id']?.toString() ??
+              responseData['data']['user_id']?.toString() ??
+              responseData['data']['_id']?.toString();
+
+          print('✅ User ID fetched successfully: $userId');
+          return userId != null && userId!.isNotEmpty;
+        }
+      }
+
+      print('❌ Failed to fetch user ID: ${response.statusCode}');
+      return false;
+    } catch (e) {
+      print('❌ Error fetching user ID: $e');
+      return false;
+    }
+  }
 
   factory Login.fromJson(Map<String, dynamic> json) {
     return Login(

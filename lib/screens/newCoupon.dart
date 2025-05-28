@@ -9,6 +9,7 @@ import 'dart:convert';
 import '../model/Login.dart';
 import 'couponList.dart';
 import '../constant.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NewCoupon extends StatefulWidget {
   final Login usernameData; // Add Login model to get merchant ID
@@ -36,6 +37,47 @@ class _NewCouponState extends State<NewCoupon> {
 
   Future<void> _initializeBle() async {
     await _bleController.initNotifications();
+  }
+
+  // Method to ensure we have proper authentication data
+  Future<bool> _ensureAuthenticationData() async {
+    // Check if we have the essential data
+    if (widget.usernameData.userId != null &&
+        widget.usernameData.userId!.isNotEmpty &&
+        widget.usernameData.authToken != null &&
+        widget.usernameData.authToken!.isNotEmpty) {
+      print('✅ Authentication data is already present');
+      return true;
+    }
+
+    print('⚠️ Missing authentication data, attempting to restore from SharedPreferences');
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      // Try to restore from SharedPreferences
+      String? savedToken = prefs.getString('token');
+      String? savedUserId = prefs.getString('user_id');
+      String? savedEmail = prefs.getString('user_email');
+      String? savedRole = prefs.getString('user_role');
+
+      if (savedToken != null && savedUserId != null) {
+        widget.usernameData.authToken = savedToken;
+        widget.usernameData.userId = savedUserId;
+        widget.usernameData.email = savedEmail ?? widget.usernameData.email;
+        widget.usernameData.userRole = savedRole ?? widget.usernameData.userRole;
+
+        print('✅ Authentication data restored from SharedPreferences');
+        print('✅ User ID: ${widget.usernameData.userId}');
+        print('✅ Auth Token: Present');
+        return true;
+      }
+    } catch (e) {
+      print('❌ Error restoring authentication data: $e');
+    }
+
+    print('❌ Could not restore authentication data');
+    return false;
   }
 
   Future<void> _pickImage() async {
@@ -227,6 +269,18 @@ class _NewCouponState extends State<NewCoupon> {
   }
 
   Future<void> _publishCoupon() async {
+    // ✅ NEW: Ensure we have proper authentication data
+    bool hasAuthData = await _ensureAuthenticationData();
+    if (!hasAuthData) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Authentication error. Please login again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // More comprehensive validation
     if (_image == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -263,7 +317,7 @@ class _NewCouponState extends State<NewCoupon> {
       return;
     }
 
-    // Check if userId exists
+    // ✅ UPDATED: More robust user ID check
     if (widget.usernameData.userId == null || widget.usernameData.userId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User ID not found. Please login again.')),
@@ -286,6 +340,23 @@ class _NewCouponState extends State<NewCoupon> {
         Uri.parse(couponURL),
       );
 
+      // ✅ UPDATED: Add proper headers including authentication
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
+        if (widget.usernameData.authToken != null && widget.usernameData.authToken!.isNotEmpty)
+          'Authorization': 'Bearer ${widget.usernameData.authToken!}',
+      });
+
+      // ✅ UPDATED: Debug print the data being sent
+      print('📤 Publishing coupon with data:');
+      print('User ID: ${widget.usernameData.userId}');
+      print('Description: ${_descriptionController.text.trim()}');
+      print('Percentage: $_selectedPercentage');
+      print('Expiry Date: ${_selectedDate!.toIso8601String()}');
+      print('Beacon ID: $_selectedBeaconId');
+      print('Auth Token: ${widget.usernameData.authToken != null ? "Present" : "Missing"}');
+
       // Safely add fields with null checks
       request.fields['merchant_id'] = widget.usernameData.userId!;
       request.fields['description'] = _descriptionController.text.trim();
@@ -296,6 +367,7 @@ class _NewCouponState extends State<NewCoupon> {
       // Add image file
       try {
         request.files.add(await http.MultipartFile.fromPath('photo', _image!.path));
+        print('✅ Image file added successfully');
       } catch (e) {
         Navigator.pop(context); // Hide loading
         ScaffoldMessenger.of(context).showSnackBar(
@@ -304,15 +376,9 @@ class _NewCouponState extends State<NewCoupon> {
         return;
       }
 
-      // Add authentication headers if available
-      if (widget.usernameData.isAuthenticated()) {
-        try {
-          request.headers.addAll(widget.usernameData.getAuthHeaders());
-        } catch (e) {
-          print('Warning: Could not add auth headers: $e');
-          // Continue without auth headers
-        }
-      }
+      print('📤 Sending coupon request to: $couponURL');
+      print('📤 Request fields: ${request.fields}');
+      print('📤 Request headers: ${request.headers}');
 
       final response = await request.send();
       final responseString = await response.stream.bytesToString();
@@ -322,21 +388,60 @@ class _NewCouponState extends State<NewCoupon> {
         Navigator.pop(context);
       }
 
+      print('📥 Response Status: ${response.statusCode}');
+      print('📥 Response Body: $responseString');
+
       if (response.statusCode == 201) {
-        if (Navigator.canPop(context)) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => CouponListPage()),
-          );
-        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Coupon published successfully'),
             backgroundColor: Colors.green,
           ),
         );
+
+        // Navigate back or to coupon list
+        if (Navigator.canPop(context)) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => CouponListPage(usernameData: widget.usernameData)),
+          );
+        }
+      } else if (response.statusCode == 401) {
+        // ✅ NEW: Handle authentication errors specifically
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Authentication failed. Please login again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else if (response.statusCode == 422) {
+        // ✅ NEW: Handle validation errors
+        String errorMessage = 'Validation error occurred';
+        try {
+          final responseData = json.decode(responseString);
+          if (responseData['errors'] != null) {
+            // Extract validation errors
+            List<String> errors = [];
+            responseData['errors'].forEach((key, value) {
+              if (value is List) {
+                errors.addAll(value.cast<String>());
+              }
+            });
+            errorMessage = errors.join(', ');
+          } else if (responseData['message'] != null) {
+            errorMessage = responseData['message'];
+          }
+        } catch (e) {
+          // Use default error message
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
       } else {
-        print('Server response: $responseString'); // For debugging
         String errorMessage = 'Failed to publish coupon';
 
         // Try to parse error message from response
@@ -346,7 +451,8 @@ class _NewCouponState extends State<NewCoupon> {
             errorMessage = responseData['message'];
           }
         } catch (e) {
-          // Use default error message
+          // Use default error message with status code
+          errorMessage = 'Failed to publish coupon (Error: ${response.statusCode})';
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -362,7 +468,7 @@ class _NewCouponState extends State<NewCoupon> {
         Navigator.pop(context);
       }
 
-      print('Error publishing coupon: $e'); // For debugging
+      print('❌ Error publishing coupon: $e'); // For debugging
 
       String errorMessage = 'Network error occurred';
       if (e.toString().contains('SocketException')) {
@@ -405,6 +511,34 @@ class _NewCouponState extends State<NewCoupon> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // ✅ NEW: Debug info panel (remove in production)
+            if (widget.usernameData.userId != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Authentication Status:',
+                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+                    ),
+                    SizedBox(height: 4),
+                    Text('User ID: ${widget.usernameData.userId}', style: TextStyle(fontSize: 10)),
+                    Text('Auth Token: ${widget.usernameData.authToken != null ? "Present" : "Missing"}', style: TextStyle(fontSize: 10)),
+                    Text('Email: ${widget.usernameData.email ?? "Not set"}', style: TextStyle(fontSize: 10)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             GestureDetector(
               onTap: _pickImage,
               child: Container(
