@@ -426,7 +426,7 @@ class _ContactnumberState extends State<Contactnumber> {
           // Navigate to Merchant Homepage with the updated usernameData
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => Merchanthomepage(usernameData: widget.usernameData)),
+            MaterialPageRoute(builder: (context) => LoginPage()),
                 (route) => false,
           );
         } else {
