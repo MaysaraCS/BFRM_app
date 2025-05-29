@@ -1,4 +1,5 @@
 import 'package:bfrm_app_flutter/model/Login.dart';
+import 'package:bfrm_app_flutter/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
@@ -87,7 +88,7 @@ class _DiningPreferencesPageState extends State<DiningPreferencesPage> {
         // Navigate to CustomerHomepage
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Customerhomepage()),
+          MaterialPageRoute(builder: (context) => LoginPage()),
         );
       } else {
         // Handle API errors

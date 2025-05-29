@@ -472,7 +472,7 @@ class _MerchanthomepageState extends State<Merchanthomepage> {
               ),
             ),
             Text(
-              widget.usernameData?.restaurantName ?? 'Merchant',
+              widget.usernameData?.email ?? 'Merchant',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 12,
