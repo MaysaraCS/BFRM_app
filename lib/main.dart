@@ -46,20 +46,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      //home:UsernamePage(usernameData:''),
-      //home:Restaurantname(usernameData: user,),
       home:WelcomePage(),
-
-      // home: DiningPreferencesPage(
-      //   username: '',
-      //   cuisinePreferences: [],
-      //   prefersCoupons: true,
-      // ),
-
-
-      //home: CuisinePreferencesPage(username: 'TestUser'),
-      // home: OTPVerificationPage(email: 'maysara779@gmail.com'),
-      // home: SuccessPage(),
     );
   }
 }
